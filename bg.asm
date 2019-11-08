@@ -1288,7 +1288,7 @@ bgcolorsize = * - bgcolor
 
 * = bgpcsave
 
-initBackground
+!macro initBackground {
             lda $d011
             ora #(1 << 5)
             and #((1 << 6) XOR $ff)
@@ -1302,4 +1302,4 @@ initBackground
             
             +copyRAM bgram, $0400, bgramsize
             +copyRAM bgcolor, $d800, bgcolorsize
-            rts
+}

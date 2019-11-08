@@ -24,7 +24,8 @@ VICIRQ   = $d019
             sta rasterlo
           }
 }
-        
+ 
+; TODO: account for the hi bit
 !macro copyRasterLine .offset {
         ldy+1 .offset
         lda lineNumbers, y
@@ -36,7 +37,7 @@ VICIRQ   = $d019
           +setVector frameVector, .vector
 }
         
-finishRasterISR
+!macro finishRasterISR {
           inc $d020
           ldy+1 currentRaster
           iny
@@ -57,13 +58,16 @@ finishRasterISR
           +copyRasterLine currentRaster
           +rasterACK
           rti
-
-finishFrame
+}
+        
+!macro finishFrame {
           +copyInterrupt rasterVectors
           +copyRasterLine currentRaster 
-          jmp finishRasterISR
+          +finishRasterISR
+}
 
-          
+noRasterISR
+          +finishRasterISR
           
 !macro createRasterBars .num {
           ;!if .num > 200 { !warn "Interrupt count exceeds viewable lines", .num }
@@ -79,8 +83,8 @@ finishFrame
           sta+1 rasterCount
           lda #0
           sta+1 currentRaster
-          lda #<finishRasterISR
-          ldy #>finishRasterISR
+          lda #<noRasterISR
+          ldy #>noRasterISR
           !for .i, .num {
             sta+1 rasterVectors + (.i - 1) * 2
             sty+1 rasterVectors + (.i - 1) * 2 + 1
@@ -91,7 +95,7 @@ finishFrame
           }     
 }
         
-initRasterISR
+!macro initRasterISR {
         sei
         LDA #$7f ; all timer conf set to value of bit 7 (0)
         sta ciaconf
@@ -105,4 +109,4 @@ initRasterISR
         lda #1
         sta $d01a
         cli
-        rts
+}

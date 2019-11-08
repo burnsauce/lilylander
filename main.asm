@@ -39,8 +39,8 @@ lowaddr
 ; INIT --------------------------------------
 kcls      = $ff81
 init      jsr kcls
-          jsr initBackground
-          jsr initFrame
+          +initBackground
+          +initFrame
           
           lda #$35        ; disable the BASIC /K ROM
           sta $01

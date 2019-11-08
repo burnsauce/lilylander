@@ -31,13 +31,16 @@ DDRB      = $dc03
           jmp (aniptr)
 }
 
+noAnimation
+          +finishFrame
+          
 ph1ani    +pushFrogRight frspd
           +pushFrogUp 3
           lda #$02
           adc cfreq + 1
           sta cfreq + 1
           +SIDfreqd 1, cfreq
-          jmp finishFrame
+          +finishFrame
 ph2ani    +pushFrogRight frspd
           lda #(frdiv / 2)
           sec
@@ -46,12 +49,13 @@ ph2ani    +pushFrogRight frspd
           +pushFrogUp 2
           jmp ++
 +         +pushFrogDown 2
-++        jmp finishFrame
+++        +finishFrame
 ph3ani    +pushFrogRight frspd
           +pushFrogDown 3
-          jmp finishFrame
+          +finishFrame
           
-jmpsound  lda #$00
+!macro jmpsound {
+          lda #$00
           sta cfreq
           lda #$08
           sta cfreq + 1
@@ -60,10 +64,11 @@ jmpsound  lda #$00
           +SIDadsr 1, 1, 7, 15, 2
           +SIDfreqd 1, cfreq
           +SIDgate 1, 1
-          rts
+}
           
-jmpstop   +SIDgate 1, 0
-          rts
+!macro jmpstop {
+          +SIDgate 1, 0
+}
 
 frameISR  lda #0
           sta $d012
@@ -110,7 +115,7 @@ skipkey   ldy phcount
           cmp #1
           beq +
           jmp ++
-+         jsr jmpsound          ;phase 1: jumping
++         +jmpsound          ;phase 1: jumping
           +loadSprite frogj1, 0
           +loadSprite frogj2, 1
           +loadSprite frogj3, 2
@@ -120,7 +125,7 @@ skipkey   ldy phcount
 ++        cmp #2
           beq +
           jmp ++
-+         jsr jmpstop           ;phase 2: soaring
++         +jmpstop           ;phase 2: soaring
           +loadSprite frogs1, 0
           +loadSprite frogs2, 1
           +loadSprite blank, 2
@@ -152,26 +157,25 @@ skipkey   ldy phcount
           +loadSprite blank, 0
           +loadSprite blank, 1
           +loadSprite blank, 3
-          +setVector aniptr, finishFrame
+          +setVector aniptr, noAnimation
           +pushFrogRight 24
           +animate
 
-initFrame
+!macro initFrame {
           ldy #frdiv
           sty phcount
           lda #0
           sta phase
           sta jumping
           sta keyheld
-          jsr initFrog
-          jsr initLily
+          +initFrog
+          +initLily
           +loadLevel 0
-debug0
           +createRasterBars 2
-          +setVector aniptr, finishFrame
+          +setVector aniptr, noAnimation
           +setFrameVector frameISR
           
           ; set interrupt vector
-          jsr initRasterISR
-          rts
+          +initRasterISR
+}
 

@@ -22,7 +22,7 @@ lilyoffset  = 319 - 256
           sta lilystate
 }
         
-initLily
+!macro initLily {
           +loadSprite lily1, 4
           +moveSprite 4, 0, 200
           +loadSprite lily2, 5
@@ -31,8 +31,8 @@ initLily
           +moveSprite 6, 0, 200 + 21
           +loadSprite lily4, 7
           +moveSprite 7, 0, 200 + 21
-          rts
-initFrog
+}
+!macro initFrog {
           .startx = 35
           .starty = 180
           +loadSprite blank, 0
@@ -46,7 +46,7 @@ initFrog
           +moveSprite 3, .startx + 24, .starty + 21
           
           +setSpriteMC 5, 2
-          rts
+}
           
 moveLily  lda lilystate
           and #1
