@@ -44,7 +44,7 @@ sprypos  = $d001
           sta spren
 }
 !macro disableSprite .num {
-          lda #((1 << .num) XOR $ff)
+          lda #((1 << .num) XOR $ff))
           and spren
           sta spren
 }
@@ -70,20 +70,20 @@ sprypos  = $d001
           adc #.amt
           sta $d000
           sta $d004
-          bcc +
-          lda #$05
-          eor $d010
-          sta $d010
-+         lda $d002
+          bcc .pfr1
+          lda #(1 << 0) OR (1 << 2)
+          ora sprxhi
+          sta sprxhi
+.pfr1     lda $d002
           clc
           adc #.amt
           sta $d002
           sta $d006
-          bcc +
-          lda #$0a
-          eor $d010
-          sta $d010
-+         
+          bcc .pfr2
+          lda #(1 << 1) OR (1 << 3)
+          ora sprxhi
+          sta sprxhi
+.pfr2   
 }
 !macro pushFrogUp .amt {
           lda $d001

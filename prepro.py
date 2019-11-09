@@ -42,6 +42,10 @@ def main():
     with open("main.txt", "w") as f:
         for line in lines:
             f.write(line)
+    for line in r.split('\n'):
+        print line
+
+
     sys.exit()
 
 if __name__ == "__main__":

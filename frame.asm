@@ -2,10 +2,13 @@
 !src "sprlib.asm"
 !src "game.asm"
 
-frame_asm = *
-
 frdiv     = 8
 frspd     = 3
+
+PRA       = $dc00
+DDRA      = $dc02
+PRB       = $dc01
+DDRB      = $dc03
 
 +reserve ~aniptr
 +reserve ~cfreq
@@ -13,7 +16,6 @@ frspd     = 3
 +reserve ~phcount, 1
 +reserve ~jumping, 1
 +reserve ~keyheld, 1
-
   
 !macro scankey .col {
           lda #((1 << .col) XOR $ff)
@@ -21,11 +23,6 @@ frspd     = 3
           lda PRB
           cmp #$ff
 }
-
-PRA       = $dc00
-DDRA      = $dc02
-PRB       = $dc01
-DDRB      = $dc03
 
 !macro animate {
           jmp (aniptr)
@@ -41,6 +38,7 @@ ph1ani    +pushFrogRight frspd
           sta cfreq + 1
           +SIDfreqd 1, cfreq
           +finishFrame
+          
 ph2ani    +pushFrogRight frspd
           lda #(frdiv / 2)
           sec
@@ -70,7 +68,9 @@ ph3ani    +pushFrogRight frspd
           +SIDgate 1, 0
 }
 
-frameISR  +moveLily
+frameISR  lda #10
+          sta $d021
+          +moveLily
           lda jumping
           cmp #1
           beq skipkey
@@ -112,7 +112,7 @@ skipkey   ldy phcount
           sta phase
           cmp #1
           beq +
-          jmp ++
+          jmp .ph2
 +         +jmpsound          ;phase 1: jumping
           +loadSprite frogj1, 0
           +loadSprite frogj2, 1
@@ -120,9 +120,9 @@ skipkey   ldy phcount
           +loadSprite blank, 3
           +setVector aniptr, ph1ani
           +animate
-++        cmp #2
+.ph2      cmp #2
           beq +
-          jmp ++
+          jmp .ph3
 +         +jmpstop           ;phase 2: soaring
           +loadSprite frogs1, 0
           +loadSprite frogs2, 1
@@ -130,9 +130,9 @@ skipkey   ldy phcount
           +loadSprite blank, 3
           +setVector aniptr, ph2ani
           +animate
-++        cmp #3
+.ph3      cmp #3
           beq +
-          jmp ++
+          jmp .ph0
 +         +loadSprite frogf1, 0    ;phase 3: falling
           +loadSprite frogf2, 1
           +loadSprite frogf4, 3
@@ -147,7 +147,7 @@ skipkey   ldy phcount
 ;          +loadSprite blank, 2
 ;          +setAnim noISR
 ;          +animate
-++        lda #0
+.ph0      lda #0
           sta phase             ;phase 0: sitting
           sta jumping
           ; TODO: check to see if landed
@@ -159,12 +159,20 @@ skipkey   ldy phcount
           +pushFrogRight 24
           +animate
 
+ras0ISR   lda #5
+          sta $d021
+          +finishRasterISR
+          
 ras1ISR   lda #6
-          sta $d020
+          sta $d021
           +finishRasterISR
 
 ras2ISR   lda #7
-          sta $d020
+          sta $d021
+          +finishRasterISR
+
+ras3ISR   lda #8
+          sta $d021
           +finishRasterISR
 
 !macro initFrame {
@@ -177,12 +185,21 @@ ras2ISR   lda #7
           +initFrog
           +initLily
           +loadLevel 0
-          +createRasterBars 2
+          +createRasterBars 8
           +setVector aniptr, noAnimation
           +setFrameVector frameISR
-          +addRasterISR 20, ras1ISR
-          +addRasterISR 100, ras2ISR
+          +addRasterISR 50, ras0ISR
+          +addRasterISR 58, ras1ISR
+          +addRasterISR 66, ras2ISR
+          +addRasterISR 74, ras3ISR
+          +addRasterISR 82, ras0ISR
+          +addRasterISR 90, ras1ISR
+          +addRasterISR 98, ras2ISR
+          +addRasterISR 106, ras3ISR
+          ; trim the border
+          lda $d016
+          and #((1 << 3) XOR $ff)
+          sta $d016
           ; set interrupt vector
           +initRasterISR
 }
-        

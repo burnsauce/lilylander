@@ -32,11 +32,10 @@ VICIRQ   = $d019
         sta rasterlo
         lda lineNumbers + 1, y
         ; we'll just store $80 in the second byte
-        cmp #$80
-        bne +
+        beq +
         ora rasterhi
         jmp ++
-+       eor #$ff
++       lda #$7f
         and rasterhi
 ++      sta rasterhi    
 }
@@ -47,33 +46,23 @@ VICIRQ   = $d019
 }
         
 !macro finishRasterISR {
-          ldy+1 currentRaster
-          bmi +
-          iny
-          cpy+1 rasterCount
-          bne +++
-          jmp ++
-+         ldy #0
-          jmp +++
-++        ;lda #0
-          ;sta+1 currentRaster / not needed here
-          ;!if frameVectorUsed != -1 {
-            +copyInterrupt frameVector
-            +setRasterLine 251
-          ;} else {
-          ;  +setInterrupt rasterVectors
-          ;}
+          lda #RASTERCOUNT
+          sec
+          sbc currentRaster
+          bne .frisr1
+          +copyInterrupt frameVector
+          +setRasterLine 251
           +rasterACK
           rti
-+++       sty+1 currentRaster
-          +copyInterrupt rasterVectors, currentRaster
+.frisr1   +copyInterrupt rasterVectors, currentRaster
           +copyRasterLine currentRaster
+          inc currentRaster
           +rasterACK
           rti
 }
         
 !macro finishFrame {
-          lda #-1
+          lda #0
           sta currentRaster
           +finishRasterISR
 }

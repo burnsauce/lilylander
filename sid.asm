@@ -1,6 +1,12 @@
 SIDbase = $d400
 SIDwidth = 7
 +reserve ~SIDctrl, 3
+!macro initSID {
+        lda #0
+        sta SIDctrl
+        sta SIDctrl + 1
+        sta SIDctrl + 2
+}
 
 !macro SIDvol .vol {
           lda #.vol
@@ -97,4 +103,3 @@ SIDwidth = 7
         sta SIDctrl + (.chan - 1)
         sta SIDbase + (SIDwidth * (.chan - 1)) + 4
 }
-sid_end

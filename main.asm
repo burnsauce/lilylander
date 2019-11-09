@@ -27,19 +27,16 @@
 *= $810
 lowaddr
 !src "common.asm"
-!src "bg.asm"
+;!src "bg.asm"
 !src "sid.asm"
 !src "game.asm"
 !src "frame.asm"
 
-; VARIABLES ------------------------------------
-;+reserve ~args, 4
-
-;!warn "Parsing init ", *        
 ; INIT --------------------------------------
 kcls      = $ff81
 init      jsr kcls
-          +initBackground
+          +initSID
+          ;+initBackground
           +initFrame
           
           lda #$35        ; disable the BASIC /K ROM

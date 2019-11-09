@@ -36,11 +36,10 @@ lilyoffset  = 319 - 256
           .startx = 35
           .starty = 180
           +loadSprite blank, 0
-          +moveSprite 0, .startx, .starty
           +loadSprite blank, 1
           +loadSprite frog2, 2
           +loadSprite blank, 3
-          
+          +moveSprite 0, .startx, .starty
           +moveSprite 1, .startx + 24, .starty
           +moveSprite 2, .startx, .starty + 21
           +moveSprite 3, .startx + 24, .starty + 21
