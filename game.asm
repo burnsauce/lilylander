@@ -48,7 +48,8 @@ lilyoffset  = 319 - 256
           +setSpriteMC 5, 2
 }
           
-moveLily  lda lilystate
+!macro moveLily  {
+          lda lilystate
           and #1
           bne .down
           lda lilypos
@@ -96,4 +97,4 @@ moveLily  lda lilystate
 +         lda #%01011111
           and $d010
 ++        sta $d010
-          rts
+}

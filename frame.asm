@@ -45,11 +45,11 @@ ph2ani    +pushFrogRight frspd
           lda #(frdiv / 2)
           sec
           sbc phcount
-          bcs +
+          bcs .frogdown
           +pushFrogUp 2
-          jmp ++
-+         +pushFrogDown 2
-++        +finishFrame
+          jmp .ph2ani1
+.frogdown +pushFrogDown 2
+.ph2ani1  +finishFrame
 ph3ani    +pushFrogRight frspd
           +pushFrogDown 3
           +finishFrame
@@ -70,9 +70,7 @@ ph3ani    +pushFrogRight frspd
           +SIDgate 1, 0
 }
 
-frameISR  lda #0
-          sta $d012
-          jsr moveLily
+frameISR  +moveLily
           lda jumping
           cmp #1
           beq skipkey
@@ -161,6 +159,14 @@ skipkey   ldy phcount
           +pushFrogRight 24
           +animate
 
+ras1ISR   lda #6
+          sta $d020
+          +finishRasterISR
+
+ras2ISR   lda #7
+          sta $d020
+          +finishRasterISR
+
 !macro initFrame {
           ldy #frdiv
           sty phcount
@@ -174,8 +180,9 @@ skipkey   ldy phcount
           +createRasterBars 2
           +setVector aniptr, noAnimation
           +setFrameVector frameISR
-          
+          +addRasterISR 20, ras1ISR
+          +addRasterISR 100, ras2ISR
           ; set interrupt vector
           +initRasterISR
 }
-
+        
