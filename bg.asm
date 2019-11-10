@@ -1,6 +1,3 @@
-!src "common.asm"
-
-
 +reserve ~bitmapp
 +reserve ~screenramp
 +reserve ~copysize

@@ -1,141 +1,136 @@
-rasterhi = $d011
-rasterlo = $d012
-ciaconf  = $dc0d
-VICIRQ   = $d019
-  
-!macro rasterACK {
+.const rasterhi = $d011
+.const rasterlo = $d012
+.const ciaconf  = $dc0d
+.const VICIRQ   = $d019
+
+.var rasterVectors = 0
+.var lineNumbers = 0
+.var frameVector = 0
+.var rasterCount = 0
+.var rasterNum   = 0
+.var currentRaster = 0
+
+.macro rasterACK() {
         asl VICIRQ
 }
 
-; requires a LITERAL
-!macro setRasterLine .line {
-          !if .line > 255 {
+.macro setRasterLine(line) {
+          .if (line > 255) {
             lda #$80
             ora rasterhi
             sta rasterhi
-            lda #<.line
+            lda #<line
             sta rasterlo
           } else {
             lda #$7f
             and rasterhi
             sta rasterhi
-            lda #<.line
+            lda #<line
             sta rasterlo
           }
 }
  
-!macro copyRasterLine .offset {
-        lda+1 .offset
+.macro copyRasterLine(offset){
+        lda offset
         asl
         tay
         lda lineNumbers, y
         sta rasterlo
         lda lineNumbers + 1, y
-        ; we'll just store $80 in the second byte
-        beq +
+        // we'll just store $80 in the second byte
+        beq !+
         ora rasterhi
-        jmp ++
-+       lda #$7f
+        jmp !++
+!:      lda #$7f
         and rasterhi
-++      sta rasterhi    
+!:      sta rasterhi    
 }
 
         
-!macro setFrameVector .vector {
-          +setVector frameVector, .vector
+.macro setFrameVector(vector) {
+          setVector(frameVector, vector)
 }
         
-!macro finishRasterISR {
-          lda #RASTERCOUNT
+.macro finishRasterISR() {
+          lda #(rasterNum)
           sec
           sbc currentRaster
-          bne .frisr1
-          +copyInterrupt frameVector
-          +setRasterLine 251
-          +rasterACK
+          bne frisr1
+          copyInterrupt(frameVector)
+          setRasterLine(251)
+          rasterACK()
           rti
-.frisr1   +copyInterrupt rasterVectors, currentRaster
-          +copyRasterLine currentRaster
+frisr1:   copyInterruptO(rasterVectors, currentRaster)
+          copyRasterLine(currentRaster)
           inc currentRaster
-          +rasterACK
+          rasterACK()
           rti
 }
         
-!macro finishFrame {
+.macro finishFrame() {
           lda #0
           sta currentRaster
-          +finishRasterISR
+          finishRasterISR()
 }
 
-noRasterISR
-          +finishRasterISR
-!set nextVector = 0
+noRasterISR:
+          finishRasterISR()
 
-; .line is LITERAL
-; .vector is, too
-!macro addRasterISR .line, .vector {
-          !if nextVector = RASTERCOUNT {
-            !serious "Too many raster ISRs."
-          }
-          .lineaddr = nextVector * 2 + lineNumbers
-          lda #<.line
-          sta .lineaddr
-          !if .line > 255 {
+.var nextVector = 0
+
+.macro addRasterISR(line, vector) {
+          //.errorif (line > rasterNum) "Too many raster lines"
+          .var lineaddr = nextVector * 2 + lineNumbers
+          lda #line
+          sta lineaddr
+          .if (line > 255) {
             lda #$80
-            sta .lineaddr + 1
+            sta lineaddr + 1
           } else {
             lda #0
-            sta .lineaddr + 1
+            sta lineaddr + 1
           }
-          lda #<.vector
+          lda #<vector
           sta nextVector * 2 + rasterVectors
-          lda #>.vector
+          lda #>vector
           sta nextVector * 2 + rasterVectors + 1
           
-          !set nextVector = nextVector + 1
+          .eval nextVector = nextVector + 1
 }
-  
-!macro createRasterBars .num {
-          ;!if .num > 200 { !warn "Interrupt count exceeds viewable lines", .num }
-          ;!if .num > 255 { !serious "Interrupt count exceeds 255", .num }
-          ; create the common data
-          +reserve ~rasterVectors, .num * 2
-          +reserve ~lineNumbers, .num * 2
-          +reserve ~frameVector
-          +reserve ~rasterCount, 1
-          !set RASTERCOUNT = .num
-          +reserve ~currentRaster, 1
-          ; init the data
-          lda #.num
-          sta+1 rasterCount
+
+
+
+.macro createRasterBars(num) {
+          .eval rasterVectors = reserve(num * 2)
+          .eval lineNumbers = reserve(num * 2)
+          .eval frameVector = reserve()
+          .eval rasterCount = reserve(1)
+          .eval rasterNum = num
+          .eval currentRaster = reserve(1)
+          lda #num
+          sta rasterCount
           lda #0
-          sta+1 currentRaster
+          sta currentRaster
           lda #<noRasterISR
           ldy #>noRasterISR
-          !for .i, .num {
-            sta+1 rasterVectors + (.i - 1) * 2
-            sty+1 rasterVectors + (.i - 1) * 2 + 1
+          .for(var i = 0; i < num; i++) {
+            sta rasterVectors + i * 2
+            sty rasterVectors + i * 2 + 1
           }
           ldy #0
-          !for .i, .num  {
-            lda #.i
-            sta+1 lineNumbers + (.i - 1) * 2 
-            sty+1 lineNumbers + (.i - 1) * 2 + 1
+          .for(var i = 0; i < num; i++)  {
+            lda #i
+            sta lineNumbers + i * 2 
+            sty lineNumbers + i * 2 + 1
           }
 }
         
-!macro initRasterISR {
+.macro initRasterISR() {
         sei
-        LDA #$7f ; all timer conf set to value of bit 7 (0)
+        lda #$7f
         sta ciaconf
-        lda+1 rasterVectors
-        sta $fffe
-        lda+1 rasterVectors + 1
-        sta $ffff
-        ;todo
-        +copyInterrupt rasterVectors
-        ;+setRasterLine 0
-        +copyRasterLine currentRaster
+        copyInterrupt(rasterVectors)
+        copyRasterLine(currentRaster)
         lda #1
         sta $d01a
         cli
