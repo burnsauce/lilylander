@@ -23,6 +23,10 @@
 .macro animate() {
           jmp (aniptr)
 }
+.macro finishFrame() {
+          asl $d019
+          rti
+}
 
 noAnimation:
           finishFrame()
@@ -148,22 +152,6 @@ ph0:      lda #0
           pushFrogRight(24)
           animate()
 
-ras0ISR:  lda #5
-          sta $d021
-          finishRasterISR()
-          
-ras1ISR:  lda #6
-          sta $d021
-          finishRasterISR()
-
-ras2ISR:  lda #7
-          sta $d021
-          finishRasterISR()
-
-ras3ISR:  lda #8
-          sta $d021
-          finishRasterISR()
-
 .macro initFrame() {
           ldy #frdiv
           sty phcount
@@ -174,13 +162,27 @@ ras3ISR:  lda #8
           initFrog()
           initLily()
           loadLevel(0)
-          createRasterBars(1)
+          //createRasterBars(1)
           setVector(aniptr, noAnimation)
-          setFrameVector(frameISR)
+          //setFrameVector(frameISR)
+          
           // trim the border
           lda $d016
           and #((1 << 3) ^ $ff)
           sta $d016
           // set interrupt vector
-          initRasterISR()
+          sei
+          lda #$7f
+          sta $dc0d
+          and $d011
+          sta $d011
+          lda #251
+          sta $d012
+          
+          setInterrupt(frameISR)
+          lda #1
+          sta $d01a
+          cli
+          
+          //initRasterISR()
 }

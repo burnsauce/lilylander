@@ -30,7 +30,7 @@ BasicUpstart(init)
 #import "sprlib.asm"
 #import "sprites.asm"
 #import "game.asm"
-#import "raster.asm"
+//#import "raster.asm"
 #import "frame.asm"
 
 // INIT --------------------------------------
