@@ -14,7 +14,8 @@
 .var jumping = reserve(1)
 .var keyheld = reserve(1)
   
-.const frameRaster = 1 
+.const frameRaster = 251 
+.const landingMargin = 24
 
 .macro scankey(col) {
           lda #((1 << col) ^ $ff)
@@ -43,7 +44,8 @@ ph1ani:   pushFrogRight(frspd)
           finishFrame()
           
 ph2ani:   pushFrogRight(frspd)
-          lda #(frdiv / 2)
+	  lda frdiv
+	  lsr
           sec
           sbc phcount
           bcs frogdown
@@ -72,8 +74,7 @@ ph3ani:   pushFrogRight(frspd)
           SIDgate(1, 0)
 }
 
-frameISR:
-          moveLily()
+frameISR: moveLily()
 	  lda keyheld
 	  beq !+
 	  jmp !++
@@ -85,43 +86,65 @@ frameISR:
           lda #0
           sta DDRB
           scankey(0)
-          bne holding
-          scankey(1)
-          bne holding
-          scankey(2)
-          bne holding
-          scankey(3)
-          bne holding
-          scankey(4)
-          bne holding
-          scankey(5)
-          bne holding
-          scankey(6)
-          bne holding
-          scankey(7)
-          bne holding
-	  lda keyheld
+	  beq !+
+          jmp holding
+!:        scankey(1)
+          beq !+
+          jmp holding
+!:        scankey(2)
+          beq !+
+          jmp holding
+!:        scankey(3)
+          beq !+
+          jmp holding
+!:        scankey(4)
+          beq !+
+          jmp holding
+!:        scankey(5)
+          beq !+
+          jmp holding
+!:        scankey(6)
+          beq !+
+          jmp holding
+!:        scankey(7)
+	  beq !+
+          jmp holding
+!:        lda keyheld
 	  bne jumpnow
           animate()
-jumpnow: 
-	  lda #1
+jumpnow:  lda #1
 	  sta jumping
 	  sta phcount
 	  lda powerLevel
 	  lsr
 	  lsr
+	  lsr
+	  lsr
 	  clc
-	  adc #1
+	  adc #2
 	  sta frspd
-	  lda #8
+	  lda #12
 	  sta frdiv
 	  lda #0
 	  sta keyheld
 	  jmp skipkey
-holding:  lda #1
+holding:  lda keyheld
+	  bne !+
+	  jmpsound()
+          lda #1
           sta keyheld
+!:	  lda powerLevel
+	  cmp #80
+	  bpl !+
 	  updatePower()
-	  animate()
+	  lda #$F0
+	  clc
+          adc cfreq
+          sta cfreq
+	  bcc !+
+	  inc cfreq + 1
+          SIDfreqd(1, cfreq)
+!:	  animate()
 skipkey:  ldy phcount
           dey
           sty phcount
@@ -138,7 +161,7 @@ skipkey:  ldy phcount
           beq !+
           jmp ph2
 !:        jmpsound()
-          loadSprite(frogj1, 0)
+	  loadSprite(frogj1, 0)
           loadSprite(frogj2, 1)
           loadSprite(frogj3, 2)
           loadSprite(blank, 3)
@@ -168,17 +191,70 @@ ph0:      lda #0
           sta phase
           sta jumping
 	  sta keyheld
-          // TODO: check to see if landed
-          //loadSprite(frog2, 2)
-          //loadSprite(blank, 0)
-          //loadSprite(blank, 1)
-          //loadSprite(blank, 3)
-
-          setVector(aniptr, noAnimation)
-          //pushFrogRight(24)
-	  initFrog()
+	  setVector(aniptr, noAnimation)
 	  resetPower()
-          animate()
+	  sec
+	  lda $d006 // frog
+	  sbc $d00e // lily
+	  clc
+	  adc #[landingMargin / 2]
+	  bpl absfound
+	  eor #$ff
+	  clc
+	  adc #1
+absfound: cmp #landingMargin
+	  bpl missed
+	  jmp hit
+missed:	  initFrog()
+	  animate()
+hit:      inc [$0400 + 41]
+	  loadSprite(frog2, 3)
+	  loadSprite(blank, 0)
+	  loadSprite(blank, 1)
+	  loadSprite(blank, 2)
+	  setInterrupt(landed)
+	  finishFrame()
+
+landed:   
+          lda #$ff
+          sta DDRA
+          lda #0
+          sta DDRB
+          scankey(0)
+	  beq !+
+          jmp continue
+!:        scankey(1)
+          beq !+
+          jmp continue
+!:        scankey(2)
+          beq !+
+          jmp continue
+!:        scankey(3)
+          beq !+
+          jmp continue
+!:        scankey(4)
+          beq !+
+          jmp continue
+!:        scankey(5)
+          beq !+
+          jmp continue
+!:        scankey(6)
+          beq !+
+          jmp continue
+!:        scankey(7)
+	  beq !+
+          jmp continue
+!:        lda keyheld
+	  bne complete
+	  finishFrame()
+continue: lda #1
+	  sta keyheld
+	  finishFrame()
+complete: lda #0
+	  sta keyheld
+	  initFrog()
+	  setInterrupt(frameISR)
+	  finishFrame()
 
 .macro initFrame() {
           ldy #frdiv
@@ -188,6 +264,8 @@ ph0:      lda #0
           sta jumping
           sta keyheld
           sta powerLevel
+	  lda #48
+	  sta [$0400 + 41]
 	  initFrog()
           initLily()
           loadLevel(0)
@@ -203,8 +281,7 @@ ph0:      lda #0
           sei
           lda #$7f
           sta $dc0d
-	  lda #$80
-          ora $d011
+          and $d011
           sta $d011
           lda #frameRaster
           sta $d012

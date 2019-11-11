@@ -10,10 +10,11 @@
 .macro updatePower() {
 	ldy powerLevel
 	iny
-	cpy #38
-	bpl done
 	sty powerLevel
 	// update the bar in matrix RAM
+	tya
+	lsr
+	tay
 	lda #160 // hash
 	sta $0400, y
 done:
@@ -32,7 +33,7 @@ done:
           lda #100
           sta lilypos
           sta lilymin
-          lda #254
+          lda #220
           sta lilymax
           lda #1
           sta lilyspeed
