@@ -3,24 +3,24 @@
 +reserve ~copysize
 
 !macro copyRAM .from, .to, .size {
-            +setVector bitmapp, .from
-            +setVector screenramp, .to
-            +setVector copysize, .size
-            ldy 0
--           lda (bitmapp),y
-            sta (screenramp),y
-            iny
-            bne +
-            inc bitmapp + 1
-            inc screenramp + 1
-+           dec copysize
-            bne -
-            dec copysize + 1
-            bne -
-            
+	+setVector bitmapp, .from
+		+setVector screenramp, .to
+		+setVector copysize, .size
+		ldy 0
+		-           lda (bitmapp),y
+		sta (screenramp),y
+		iny
+		bne +
+		inc bitmapp + 1
+		inc screenramp + 1
+		+           dec copysize
+		bne -
+		dec copysize + 1
+		bne -
+
 }
 
-            
+
 bgpcsave = *
 * = $2000
 bgbitmap
@@ -1286,17 +1286,17 @@ bgcolorsize = * - bgcolor
 * = bgpcsave
 
 !macro initBackground {
-            lda $d011
-            ora #(1 << 5)
-            and #((1 << 6) XOR $ff)
-            sta $d011
-            lda $d016
-            ora #(1 << 4)
-            sta $d016
-            lda $d018
-            ora #(1 << 3)
-            sta $d018
-            
-            +copyRAM bgram, $0400, bgramsize
-            +copyRAM bgcolor, $d800, bgcolorsize
+	lda $d011
+		ora #(1 << 5)
+		and #((1 << 6) XOR $ff)
+		sta $d011
+		lda $d016
+		ora #(1 << 4)
+		sta $d016
+		lda $d018
+		ora #(1 << 3)
+		sta $d018
+
+		+copyRAM bgram, $0400, bgramsize
+		+copyRAM bgcolor, $d800, bgcolorsize
 }

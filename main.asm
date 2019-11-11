@@ -35,15 +35,15 @@ BasicUpstart(init)
 
 // INIT --------------------------------------
 .const kcls = $ff81
-init:     jsr kcls
-          lda #$35        // disable the BASIC /K ROM
-          sta $01
+init:	jsr kcls
+	lda #$35	      // disable the BASIC /K ROM
+	sta $01
 
-          initSID()
-          //initBackground()
-          initFrame()
-          
-loop:     jmp loop
+	initSID()
+	//initBackground()
+	initFrame()
+	
+loop:	jmp loop
 
 highest_code:
       
