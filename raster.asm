@@ -1,3 +1,5 @@
+* = * "Raster Code"
+
 .const rasterhi = $d011
 .const rasterlo = $d012
 .const ciaconf  = $dc0d

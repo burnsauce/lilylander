@@ -56,7 +56,11 @@
             lda #(1 << num)
             ora sprxhi
             sta sprxhi
-          }
+          } else {
+	  	lda #((1 << num) ^ $ff)
+		and sprxhi
+		sta sprxhi
+	}
           lda #<x
           sta sprxpos + (num * 2)
           lda #y
@@ -65,7 +69,7 @@
 .macro pushFrogRight(amt) {
           lda $d000
           clc
-          adc #amt
+          adc amt
           sta $d000
           sta $d004
           bcc pfr1
@@ -74,7 +78,7 @@
           sta sprxhi
 pfr1:     lda $d002
           clc
-          adc #amt
+          adc amt
           sta $d002
           sta $d006
           bcc pfr2

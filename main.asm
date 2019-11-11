@@ -22,8 +22,8 @@
 * = $801 "Bootstrap"
 BasicUpstart(init)
      
-* = $810 "Program"
-.var lowaddr = *
+* = $810 "Program Code"
+//.var lowaddr = *
 #import "common.asm"
 //#import "bg.asm"
 #import "sid.asm"
@@ -36,12 +36,12 @@ BasicUpstart(init)
 // INIT --------------------------------------
 .const kcls = $ff81
 init:     jsr kcls
+          lda #$35        // disable the BASIC /K ROM
+          sta $01
+
           initSID()
           //initBackground()
           initFrame()
-          
-          lda #$35        // disable the BASIC /K ROM
-          sta $01
           
 loop:     jmp loop
 

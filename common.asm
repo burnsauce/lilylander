@@ -6,6 +6,9 @@
 
 .function reserve(bytes) {
           .var ret = nextVar
+	  .if (nextVar == $100) {
+	  	.error "Too many zeropage variables"
+	}
           .if ((bytes == 1) && (savedVar != 0)) {
             .eval ret = savedVar
             .eval savedVar = 0

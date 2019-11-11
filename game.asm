@@ -1,11 +1,31 @@
-
+* = * "Game Code"
 .var lilypos = reserve(1)
 .var lilystate = reserve(1)
 .var lilymin = reserve(1)
 .var lilymax = reserve(1)
 .var lilyspeed = reserve(1)
-
+.var powerLevel = reserve(1)
 .const lilyoffset  = 319 - 256
+
+.macro updatePower() {
+	ldy powerLevel
+	iny
+	cpy #38
+	bpl done
+	sty powerLevel
+	// update the bar in matrix RAM
+	lda #160 // hash
+	sta $0400, y
+done:
+}
+.macro resetPower() {
+	lda #32
+	ldy #40
+!:	dey
+	sta $0400, y
+	bne !-
+	sty powerLevel
+}
 
 .macro loadLevel(lvl) {
 //  !if .lvl = 0 {
@@ -42,7 +62,7 @@
           moveSprite(2, startx, starty + 21)
           moveSprite(3, startx + 24, starty + 21)
           
-          setSpriteMC(5, 2)
+	  setSpriteMC(5, 2)
 }
           
 .macro moveLily() {

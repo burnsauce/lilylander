@@ -1,5 +1,6 @@
-.const frdiv     = 8
-.const frspd     = 3
+* = * "Frame Code"
+.var frdiv = reserve(1)
+.var frspd = reserve(1)
 
 .const PRA       = $dc00
 .const DDRA      = $dc02
@@ -13,6 +14,8 @@
 .var jumping = reserve(1)
 .var keyheld = reserve(1)
   
+.const frameRaster = 1 
+
 .macro scankey(col) {
           lda #((1 << col) ^ $ff)
           sta PRA
@@ -69,43 +72,63 @@ ph3ani:   pushFrogRight(frspd)
           SIDgate(1, 0)
 }
 
-frameISR: lda #10
-          sta $d021
+frameISR:
           moveLily()
-          lda jumping
-          cmp #1
-          beq skipkey
-          lda #$ff
+	  lda keyheld
+	  beq !+
+	  jmp !++
+!:        lda jumping
+          beq !+
+	  jmp skipkey
+!:        lda #$ff
           sta DDRA
           lda #0
           sta DDRB
           scankey(0)
-          bne !+
+          bne holding
           scankey(1)
-          bne !+
+          bne holding
           scankey(2)
-          bne !+
+          bne holding
           scankey(3)
-          bne !+
+          bne holding
           scankey(4)
-          bne !+
+          bne holding
           scankey(5)
-          bne !+
+          bne holding
           scankey(6)
-          bne !+
+          bne holding
           scankey(7)
-          bne !+
+          bne holding
+	  lda keyheld
+	  bne jumpnow
           animate()
-!:        lda #1
-          sta jumping
+jumpnow: 
+	  lda #1
+	  sta jumping
+	  sta phcount
+	  lda powerLevel
+	  lsr
+	  lsr
+	  clc
+	  adc #1
+	  sta frspd
+	  lda #8
+	  sta frdiv
+	  lda #0
+	  sta keyheld
+	  jmp skipkey
+holding:  lda #1
+          sta keyheld
+	  updatePower()
+	  animate()
 skipkey:  ldy phcount
           dey
           sty phcount
-          cpy #0
           beq !+
           animate()
 // --------------- phase update ----------------
-!:        ldy #frdiv
+!:        ldy frdiv
           sty phcount
           lda phase          
           clc
@@ -134,6 +157,7 @@ ph2:      cmp #2
 ph3:      cmp #3
           beq !+
           jmp ph0
+
 !:        loadSprite(frogf1, 0)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      
           loadSprite(frogf2, 1)
           loadSprite(frogf4, 3)
@@ -143,13 +167,17 @@ ph3:      cmp #3
 ph0:      lda #0
           sta phase
           sta jumping
+	  sta keyheld
           // TODO: check to see if landed
-          loadSprite(frog2, 2)
-          loadSprite(blank, 0)
-          loadSprite(blank, 1)
-          loadSprite(blank, 3)
+          //loadSprite(frog2, 2)
+          //loadSprite(blank, 0)
+          //loadSprite(blank, 1)
+          //loadSprite(blank, 3)
+
           setVector(aniptr, noAnimation)
-          pushFrogRight(24)
+          //pushFrogRight(24)
+	  initFrog()
+	  resetPower()
           animate()
 
 .macro initFrame() {
@@ -159,7 +187,8 @@ ph0:      lda #0
           sta phase
           sta jumping
           sta keyheld
-          initFrog()
+          sta powerLevel
+	  initFrog()
           initLily()
           loadLevel(0)
           //createRasterBars(1)
@@ -174,9 +203,10 @@ ph0:      lda #0
           sei
           lda #$7f
           sta $dc0d
-          and $d011
+	  lda #$80
+          ora $d011
           sta $d011
-          lda #251
+          lda #frameRaster
           sta $d012
           
           setInterrupt(frameISR)
