@@ -1,5 +1,3 @@
-.label bitmapAddr = $4000
-.label matrixAddr = $7000
 .label ramAddr = $d800
 #import "rivbg.asm"
 
@@ -14,9 +12,10 @@
 	ora #(1 << 4)		// multicolor mode
 	sta $d016
 
-	lda $d018 // bits 4-7 are for matrix offset
-	and #$0f
-	ora #%11000000
+	//lda $d018 // bits 4-7 are for matrix offset
+	//and #$0f  // bits 1-3 are for bitmap
+	//ora #%00001000
+	lda #%00001000
 	sta $d018
 
 	lda $dd00 // last 2 bits set VIC bank
@@ -24,5 +23,6 @@
 	ora #%00000010
 	sta $dd00
 
-	initRiver(bitmapAddr, matrixAddr, ramAddr)
+	initRiver(bmb1, smb1, ramAddr)
+	copyDblBuf()
 }

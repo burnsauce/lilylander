@@ -98,7 +98,6 @@
 	256 - 1 = 255 bytes from first page
 */
 .macro copyMem(from, to, size) {
-	.print toHexString(*) + ": copying $" + toHexString(size) + " bytes from $" + toHexString(from) + " to $" + toHexString(to)
 	.if(size < $100) {
 		ldx #0
 !:		lda from, x
@@ -127,4 +126,28 @@
 	}
 }
 
+.pseudocommand cmp16 a : b {
+	lda a
+	cmp b
+	bne !+
+	lda _16bitNext(a)
+	cmp _16bitNext(b)
+!:
+}
 
+.label mcrptr = reserve()
+.label mcwptr = reserve()
+.label mcompr = reserve()
+.pseudocommand memcpy from : to : size {
+	mov16 from : mcrptr
+	mov16 to : mcwptr
+	mov16 from : mcompr
+	add16 mcompr : size : mcompr
+	ldy #0
+!:	lda (mcrptr), y
+	sta (mcwptr), y
+	inc16 mcrptr
+	inc16 mcwptr
+	cmp16 mcrptr : mcompr
+	bne !-
+}

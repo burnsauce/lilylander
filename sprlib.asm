@@ -1,4 +1,3 @@
-.const sprtable = $73f8
 .const spren    = $d015
 .const sprmc    = $d01c
 .const sprcolor = $d027
@@ -9,7 +8,7 @@
 .const sprypos  = $d001
 .label sprbase = $4000
 //.var sprpos = reserve(16)
-.label lsarg = reserve(1)
+.label lsarg = reserve(2)
 
 .macro setSpriteMC(mc1, mc2) {
 	lda #mc1
@@ -20,8 +19,10 @@
 
 .macro loadSprite(location, num) {
 	.print "Loading sprite at location $" + toHexString(location) + " to slot " + num
+	
 	lda #location
-	sta sprtable + num
+	ldy #num
+	sta (sprPtr), y
 	.eval location = (((location + 1) * 64) - 1) + sprbase
 	.print "Address: $" + toHexString(location - $3f)
 	lda location

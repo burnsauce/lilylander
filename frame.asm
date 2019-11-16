@@ -13,10 +13,12 @@
 .label jumping = reserve(1)
 .label keyheld = reserve(1)
 .label seconds = reserve(1)  
+.label secondsc = reserve(1)  
 .label level = reserve(1)
 .const frameRaster = 251 
 .const landingMargin = 24
 .label xscroll = reserve(1)
+.label xscrollHandlers = reserve(16)
 
 .macro scankey(col) {
 	lda #((1 << col) ^ $ff)
@@ -29,6 +31,44 @@
 	jmp (aniptr)
 }
 .macro finishFrame() {
+	dec xscroll
+	lda #7
+	and xscroll
+	sta xscroll
+	lda #$f8
+	and $d016
+	ora xscroll
+	sta $d016
+	lda xscroll
+	cmp #0
+	beq !+
+	jmp f1
+!:	
+f1:	cmp #1
+	beq !+
+	jmp f2
+!:	jmp done
+f2:	cmp #2
+	beq !+
+	jmp f3
+!:	jmp done
+f3:	cmp #3
+	beq !+
+	jmp f4
+!:	jmp done
+f4:	cmp #4
+	beq !+
+	jmp f5
+!:	jmp done
+f5:	cmp #5
+	beq !+
+	jmp f6
+!:	jmp done
+f6:	cmp #6
+	beq !+
+	jmp f7
+!:	jmp done
+f7:	switchBank()
 /*
 	ldy $d016
 	lda $d016
@@ -40,8 +80,8 @@
 	ora $d016
 	sta $d016
 */
-//	switchBank()
-	asl $d019
+	switchBank()
+done:	asl $d019
 	rti
 }
 
@@ -160,9 +200,8 @@ jmpsound()
 	inc cfreq + 1
 	SIDfreqd(1, cfreq)
 !:	animate()
-	skipkey:	ldy phcount
-	dey
-	sty phcount
+skipkey:
+	dec phcount
 	beq !+
 	animate()
 	// --------------- phase update ----------------
@@ -221,7 +260,7 @@ absfound: cmp #landingMargin
 miss:	setInterrupt(missed)
 	lda #0
 	sta seconds
-	ldy #15
+	mov #15 : secondsc
 	SIDfreq(1, $0F00)
 	SIDgate(1, 1)
 	animate()
@@ -234,15 +273,15 @@ hit:	inc [$0400 + 41]
 	setInterrupt(landed)
 	lda #0
 	sta seconds
-	ldy #15
+	mov #15 : secondsc
 	SIDfreq(1, $0F00)
 	SIDgate(1, 1)
 	finishFrame()
 
 missed:	moveLily()
-	dey
+	dec secondsc
 	bne mlks
-	ldy #15
+	mov #15 : secondsc
 	lda seconds
 	clc
 	adc #1
@@ -281,12 +320,13 @@ mlks:	lda #$ff
 	beq !+
 	jmp mcont
 !:	lda keyheld
-	bne mcomplete
-	lda seconds
+	beq !+
+	jmp mcomplete
+!:	lda seconds
 	cmp #2
 	bpl !+
 	animate()
-!:	ldy #15
+!:	mov #15 : secondsc
 	finishFrame()
 mcont:	lda #1
 	sta keyheld
@@ -302,9 +342,9 @@ mcomplete: lda #0
 	setInterrupt(frameISR)
 	finishFrame()
 
-landed:	dey
+landed:	dec secondsc
 	bne lks
-	ldy #15
+	mov #15 : secondsc
 	lda seconds
 	clc
 	adc #1
@@ -343,8 +383,9 @@ lks:	lda #$ff
 	beq !+
 	jmp continue
 !:	lda keyheld
-	bne complete
-	finishFrame()
+	beq !+
+	jmp complete
+!:	finishFrame()
 continue: lda #1
 	sta keyheld
 	finishFrame()
@@ -362,7 +403,6 @@ complete:
 	ldy #frdiv
 	sty phcount
 	lda #0
-	sta xscroll
 	sta phase
 	sta jumping
 	sta keyheld
@@ -370,6 +410,8 @@ complete:
 	sta seconds
 	lda #1
 	sta level
+	lda #7
+	sta xscroll
 	lda #48
 	//sta [$0400 + 41]
 	initFrog()

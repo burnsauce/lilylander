@@ -353,11 +353,11 @@ colorram:
 .label wrV = reserve()
 .label wrV2 = reserve()
 
-*=*	"Multiply table (*40, 0-24)"
+*=*	"Multiply table (0-24 * 40)"
 mul40_table:	.for(var x=0; x<25; x++) {
 			.word x * 40
 		}
-*=*	"Multiply table (*320, 0-24)"
+*=*	"Multiply table (0-24 * 320)"
 mul320_table:	.for(var x=0; x<25; x++) {
 			.word x * 320
 		}
@@ -379,8 +379,9 @@ mul320_table:	.for(var x=0; x<25; x++) {
 	clc
 	adc tar + 1
 	sta tar + 1
-	ldy #0
+done:	ldy #0
 }
+
 
 .macro mla320(val, tar) {
 	lda val
@@ -399,7 +400,7 @@ mul320_table:	.for(var x=0; x<25; x++) {
 	clc
 	adc tar + 1
 	sta tar + 1
-	ldy #0
+done:	ldy #0
 }
 
 .macro initRiver(bmbase, mbase, rbase) {
@@ -460,8 +461,9 @@ col2:	mov16 wrV2 : wrV
 	inc row
 	lda row
 	cmp #25
-	bne col2
-	sty row
+	beq !+
+	jmp col2
+!:	sty row
 	inc16 wrV2
 	dec column
 	beq !+
@@ -481,8 +483,9 @@ col3:	mov16 wrV2 : wrV
 	inc row
 	lda row
 	cmp #25
-	bne col3
-	sty row
+	beq !+
+	jmp col3
+!:	sty row
 	inc16 wrV2
 	dec column
 	beq !+
