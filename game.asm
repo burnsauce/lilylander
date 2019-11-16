@@ -1,10 +1,10 @@
 * = * "Game Code"
-.var lilypos = reserve(1)
-.var lilystate = reserve(1)
-.var lilymin = reserve(1)
-.var lilymax = reserve(1)
-.var lilyspeed = reserve(1)
-.var powerLevel = reserve(1)
+//.var lilystate = reserve(1)
+//.var lilymin = reserve(1)
+//.var lilymax = reserve(1)
+//.var lilyspeed = reserve(1)
+.label powerLevel = reserve(1)
+.label lilypos = reserve(1)
 .const lilyoffset  = 319 - 256
 
 .macro updatePower() {
@@ -30,15 +30,21 @@ done:
 
 .macro loadLevel(lvl) {
 //	!if .lvl = 0 {
+
 	lda #100
 	sta lilypos
-	sta lilymin
-	lda #220
-	sta lilymax
-	lda #1
-	sta lilyspeed
+
 	lda #0
-	sta lilystate
+	sta $d40f
+	lda lvl
+	asl
+	sta $d40e
+	lda #%00010001
+	sta $d412
+	lda #$0f
+	sta $d414
+	lda #%10001111
+	sta $d418
 }
 				
 .macro initLily() {
@@ -67,30 +73,10 @@ done:
 }
 					
 .macro moveLily() {
-	lda lilystate
-	and #1
-	bne down
-	lda lilypos
+	lda $d41b	// osc 3
+	lsr		// 0-127
 	clc
-	adc lilyspeed
-	bcs !+
-	cmp lilymax
-	bcc done											
-!:	lda #1
-	ora lilystate
-	sta lilystate
-	lda lilymax
-	jmp done
-down:	lda lilypos
-	sec
-	sbc lilyspeed
-	bcc !+
-	cmp lilymin
-	bcs done
-!:	lda #$fe
-	and lilystate
-	sta lilystate
-	lda lilymin
+	adc #100
 done:	sta lilypos
 	clc
 	adc #lilyoffset - 24

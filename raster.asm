@@ -5,12 +5,12 @@
 .const ciaconf	= $dc0d
 .const VICIRQ	= $d019
 
-.var rasterVectors	= 0
-.var lineNumbers	= 0
-.var frameVector	= 0
-.var rasterCount	= 0
-.var rasterNum	= 0
-.var currentRaster	= 0
+.label rasterVectors	= 0
+.label lineNumbers	= 0
+.label frameVector	= 0
+.label rasterCount	= 0
+.label rasterNum	= 0
+.label currentRaster	= 0
 
 .macro rasterACK() {
 	asl VICIRQ

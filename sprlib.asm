@@ -1,4 +1,4 @@
-.const sprtable = $07f8
+.const sprtable = $73f8
 .const spren    = $d015
 .const sprmc    = $d01c
 .const sprcolor = $d027
@@ -7,9 +7,9 @@
 .const sprxhi   = $d010
 .const sprxpos  = $d000
 .const sprypos  = $d001
-
-.var sprpos = reserve(16)
-.var lsarg = reserve(1)
+.label sprbase = $4000
+//.var sprpos = reserve(16)
+.label lsarg = reserve(1)
 
 .macro setSpriteMC(mc1, mc2) {
 	lda #mc1
@@ -17,14 +17,16 @@
 	lda #mc2
 	sta sprmc2
 }
+
 .macro loadSprite(location, num) {
+	.print "Loading sprite at location $" + toHexString(location) + " to slot " + num
 	lda #location
 	sta sprtable + num
-	.eval location = (((location + 1) * 64) - 1)
+	.eval location = (((location + 1) * 64) - 1) + sprbase
+	.print "Address: $" + toHexString(location - $3f)
 	lda location
 	sta lsarg
 	and #$80	 // multicolor
-
 	beq !+
 	lda #(1 << num) 
 	ora sprmc
@@ -46,10 +48,12 @@
 	and spren
 	sta spren
 }
+
 .macro enableSprites() {
 	lda #$ff
 	sta spren
 }
+
 .macro moveSprite(num, x, y) {
 	.if (x > 255) {
 	// load the hi bit	
@@ -66,6 +70,7 @@
 	lda #y
 	sta sprypos + (num * 2)
 }
+
 .macro pushFrogRight(amt) {
 	lda $d000
 	clc
@@ -100,6 +105,7 @@ pfr2:
 	sta $d005
 	sta $d007
 }
+
 .macro pushFrogDown(amt) {
 	lda $d001
 	clc

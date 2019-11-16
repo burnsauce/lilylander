@@ -1,20 +1,22 @@
 * = * "Frame Code"
-.var frdiv = reserve(1)
-.var frspd = reserve(1)
+.label frdiv = reserve(1)
+.label frspd = reserve(1)
 
 .const PRA	 = $dc00
 .const DDRA	 = $dc02
 .const PRB	 = $dc01
 .const DDRB	 = $dc03
-.var aniptr = reserve()
-.var cfreq = reserve()
-.var phase = reserve(1)
-.var phcount = reserve(1)
-.var jumping = reserve(1)
-.var keyheld = reserve(1)
-.var seconds = reserve(1)  
+.label aniptr = reserve()
+.label cfreq = reserve()
+.label phase = reserve(1)
+.label phcount = reserve(1)
+.label jumping = reserve(1)
+.label keyheld = reserve(1)
+.label seconds = reserve(1)  
+.label level = reserve(1)
 .const frameRaster = 251 
 .const landingMargin = 24
+.label xscroll = reserve(1)
 
 .macro scankey(col) {
 	lda #((1 << col) ^ $ff)
@@ -27,8 +29,19 @@
 	jmp (aniptr)
 }
 .macro finishFrame() {
+/*
+	ldy $d016
+	lda $d016
+	and #$f8
+	sta $d016
+	dey	
+	tya
+	and #7
+	ora $d016
+	sta $d016
+*/
 	asl $d019
-		rti
+	rti
 }
 
 noAnimation:
@@ -50,8 +63,10 @@ ph2ani:	pushFrogRight(frspd)
 	bcs frogdown
 	pushFrogUp(2)
 	jmp ph2ani1
-frogdown: pushFrogDown(2)
-ph2ani1:	finishFrame()
+frogdown:
+	pushFrogDown(2)
+ph2ani1:
+	finishFrame()
 
 ph3ani:	pushFrogRight(frspd)
 	pushFrogDown(3)
@@ -164,7 +179,7 @@ jmpsound()
 	loadSprite(frogj2, 1)
 	loadSprite(frogj3, 2)
 	loadSprite(blank, 3)
-	setVector(aniptr, ph1ani)
+	mov16 #ph1ani : aniptr
 	animate()
 ph2:	cmp #2
 	beq !+
@@ -174,7 +189,7 @@ ph2:	cmp #2
 	loadSprite(frogs2, 1)
 	loadSprite(blank, 2)
 	loadSprite(blank, 3)
-	setVector(aniptr, ph2ani)
+	mov16 #ph2ani : aniptr
 	animate()
 ph3:	cmp #3
 	beq !+
@@ -183,7 +198,7 @@ ph3:	cmp #3
 	loadSprite(frogf2, 1)
 	loadSprite(frogf4, 3)
 	loadSprite(blank, 2)
-	setVector(aniptr, ph3ani)
+	mov16 #ph3ani : aniptr
 	animate()
 ph0:	lda #0
 	sta phase
@@ -210,7 +225,7 @@ miss:	setInterrupt(missed)
 	SIDgate(1, 1)
 	animate()
 hit:	inc [$0400 + 41]
-	setVector(aniptr, noAnimation)
+	mov16 #noAnimation : aniptr
 	loadSprite(frog2, 3)
 	loadSprite(blank, 0)
 	loadSprite(blank, 1)
@@ -223,7 +238,8 @@ hit:	inc [$0400 + 41]
 	SIDgate(1, 1)
 	finishFrame()
 
-missed:	dey
+missed:	moveLily()
+	dey
 	bne mlks
 	ldy #15
 	lda seconds
@@ -281,7 +297,7 @@ mcont:	lda #1
 mcomplete: lda #0
 	sta keyheld
 	initFrog()
-	setVector(aniptr, noAnimation)
+	mov16 #noAnimation : aniptr
 	setInterrupt(frameISR)
 	finishFrame()
 
@@ -331,7 +347,10 @@ lks:	lda #$ff
 continue: lda #1
 	sta keyheld
 	finishFrame()
-complete: lda #0
+complete: 
+	inc level
+	loadLevel(level)
+	lda #0
 	sta keyheld
 	SIDgate(1, 0)
 	initFrog()
@@ -342,24 +361,25 @@ complete: lda #0
 	ldy #frdiv
 	sty phcount
 	lda #0
+	sta xscroll
 	sta phase
 	sta jumping
 	sta keyheld
 	sta powerLevel
 	sta seconds
+	lda #1
+	sta level
 	lda #48
-	sta [$0400 + 41]
+	//sta [$0400 + 41]
 	initFrog()
 	initLily()
-	loadLevel(0)
-	//createRasterBars(1)
-	setVector(aniptr, noAnimation)
-	//setFrameVector(frameISR)
+	loadLevel(level)
+	mov16 #noAnimation : aniptr
 
 	// trim the border
-	lda $d016
-	and #((1 << 3) ^ $ff)
-	sta $d016
+	//lda $d016
+	//and #((1 << 3) ^ $ff)
+	//sta $d016
 	// set interrupt vector
 	sei
 	lda #$7f
@@ -369,10 +389,10 @@ complete: lda #0
 	lda #frameRaster
 	sta $d012
 
+	initBackground()
 	setInterrupt(frameISR)
 	lda #1
 	sta $d01a
 	cli
 
-	//initRasterISR()
 }

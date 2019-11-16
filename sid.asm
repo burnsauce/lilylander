@@ -1,6 +1,6 @@
 .const SIDbase = $d400
 .const SIDwidth = 7
-.var SIDctrl = reserve(3)
+.label SIDctrl = reserve(3)
 
 .macro initSID() {
 	lda #0
@@ -38,7 +38,7 @@
 }
 .macro SIDgate(chan, gate) {
 	.if (gate > 0) {
-		lda #1 ; bit 0
+		lda #1 // bit 0
 		ora SIDctrl + (chan - 1)
 		sta SIDctrl + (chan - 1)
 		sta SIDbase + (SIDwidth * (chan - 1)) + 4
@@ -51,7 +51,7 @@
 }
 .macro SIDsync(chan, sync) {
 	.if (sync > 0) {
-		lda #2 ; bit 1
+		lda #2 // bit 1
 		ora SIDctrl + (chan - 1)
 		sta SIDctrl + (chan - 1)
 		sta SIDbase + (SIDwidth * (chan - 1)) + 4
@@ -64,7 +64,7 @@
 }
 .macro SIDring(chan, ring) {
 	.if (ring > 0) {
-		lda #4 ; bit 1
+		lda #4 // bit 1
 		ora SIDctrl + (chan - 1)
 		sta SIDctrl + (chan - 1)
 		sta SIDbase + (SIDwidth * (chan - 1)) + 4
