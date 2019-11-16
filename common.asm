@@ -14,13 +14,6 @@
 	sta tar
 }
 
-.pseudocommand ld16 val:tar {
-	lda #<val.getValue()
-	sta tar
-	lda #>val.getValue()
-	sta _16bitNext(tar)
-}
-
 .pseudocommand mov16 src:tar {
 	lda src
 	sta tar

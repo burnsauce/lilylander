@@ -353,16 +353,11 @@ colorram:
 .label wrV = reserve()
 .label wrV2 = reserve()
 
-/*
-	addr = col + row * 40
-	40 = 32 + 8
-	8 = lsh * 3
-	32 = lsh * 5
-*/
-.align $100
+*=*	"Multiply table (*40, 0-24)"
 mul40_table:	.for(var x=0; x<25; x++) {
 			.word x * 40
 		}
+*=*	"Multiply table (*320, 0-24)"
 mul320_table:	.for(var x=0; x<25; x++) {
 			.word x * 320
 		}

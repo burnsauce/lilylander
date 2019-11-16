@@ -10,6 +10,7 @@ BasicUpstart(init)
 * = $810 "Program Code"
 //.var lowaddr = *
 #import "common.asm"
+#import "dblbuf.asm"
 #import "bg.asm"
 #import "sid.asm"
 #import "sprlib.asm"
@@ -22,6 +23,7 @@ init:	jsr kcls
 	lda #$35	      // disable the BASIC /K ROM
 	sta $01
 
+	initDblBuf()
 	initSID()
 	//initBackground()
 	initFrame()

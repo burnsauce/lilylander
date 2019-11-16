@@ -2,7 +2,6 @@
 .label matrixAddr = $7000
 .label ramAddr = $d800
 #import "rivbg.asm"
-#import "sprites.asm"
 
 .macro initBackground() {
 	lda $d011
