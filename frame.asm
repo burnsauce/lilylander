@@ -6,7 +6,7 @@
 .const DDRA	 = $dc02
 .const PRB	 = $dc01
 .const DDRB	 = $dc03
-.const frameRaster = 200
+.const frameRaster = 250
 .const preFrameRaster = 1
 .const landingMargin = 24
 
@@ -56,10 +56,9 @@
 	sta XSCROL
 
 	// set interrupt vector
-	sei
 	lda #$7f
-	sta $dc0d
 	and $d011
+	ora #1 << 4
 	sta $d011
 	lda #frameRaster
 	sta $d012

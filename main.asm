@@ -18,9 +18,21 @@
 
 .segment InitCode
 .const kcls = $ff81
-init:	jsr kcls
-	lda #$35	      // disable the BASIC /K ROM
+init:	sei
+	// disable timer
+	lda #$7f
+	sta $dc0d
+	// disable raster IRQ
+	lda #0
+	sta $d01a
+	// blank the frame
+	lda #1 << 4
+	ora $d011
+	sta $d011
+	// disable BASIC and KERNAL
+	lda #$35
 	sta $01
+	
 	initDblBuf()
 	initSID()
 	initFrame()
