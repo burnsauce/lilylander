@@ -6,8 +6,8 @@
 .const DDRA	 = $dc02
 .const PRB	 = $dc01
 .const DDRB	 = $dc03
-.const frameRaster = 251 
-.const preFrameRaster = 10
+.const frameRaster = 200
+.const preFrameRaster = 1
 .const landingMargin = 24
 
 .label aniptr = reserve()
@@ -87,8 +87,15 @@ preFrameISR:
 	lda #frameRaster
 	sta $d012
 	.break
-pfdone:	asl $d019
+	asl $d019
 	finishISR()
+
+.macro switchToPreframe() {
+	mov16 $fffe : nextFrameISR
+	setInterrupt(preFrameISR)
+	lda #preFrameRaster
+	sta $d012
+}
 
 *=* "finishFrame"
 finishFrame:
@@ -104,16 +111,10 @@ finishFrame:
 	ora $d016
 	sta $d016
 	lda xscroll
-	cmp #$e
-	bne !+
-	mov16 $fffe : nextFrameISR
-	setInterrupt(preFrameISR)
-	lda #preFrameRaster
-	sta $d012
-	jmp fdone
-!:	cmp #$f
+	cmp #$f
 	bne fdone
 	switchBank()
+	switchToPreframe()
 fdone:	asl $d019
 	finishISR()
 

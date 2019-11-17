@@ -15,9 +15,6 @@
 }
 
 .macro copyDblBuf() {
-	memcpy #bmb1 : #bmb2 : #$1f40
-	memcpy #smb1 : #smb2 : #$3f8
-	memcpy #$d800 : #rmb : #$3f8
 	memcpy #sprbank1 : #sprbank2 : #sprdata_size
 }
 

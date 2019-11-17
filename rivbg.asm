@@ -108,4 +108,7 @@ col3:	mov16 wrV2 : wrV
 	beq !+
 	jmp col3
 !:
+	copyDblBitmap()
+	copyDblMatrix()
+	copyDblRam()
 }

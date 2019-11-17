@@ -28,7 +28,7 @@ init:	jsr kcls
 
 .segment Code "Main Loop"
 loop:	lda xscroll
-	cmp #$e
+	cmp #$f
 	bne loop
 	copyDblBitmap()
 	copyDblMatrix()
