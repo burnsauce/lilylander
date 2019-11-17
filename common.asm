@@ -93,7 +93,12 @@
 	inx
 	bne !-
 }
-
+.macro startISR() {
+	php; pha; txa; pha; tya; pha
+}
+.macro finishISR() {
+	pla; tay; pla; tax; pla; plp; rti
+}
 /*
 	$1001, $2000, $fff
 	256 - 1 = 255 bytes from first page

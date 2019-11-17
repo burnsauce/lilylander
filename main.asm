@@ -30,8 +30,7 @@ init:	jsr kcls
 loop:	lda xscroll
 	cmp #$e
 	bne loop
-	jsr copyDblBitmap
-	jsr copyDblMatrix
-	//jsr copyDblRam
-	//jsr copyDblToRam
+	copyDblBitmap()
+	copyDblMatrix()
+	copyDblRam()
 	jmp loop

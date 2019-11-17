@@ -6,6 +6,10 @@
 .const DDRA	 = $dc02
 .const PRB	 = $dc01
 .const DDRB	 = $dc03
+.const frameRaster = 251 
+.const preFrameRaster = 10
+.const landingMargin = 24
+
 .label aniptr = reserve()
 .label cfreq = reserve()
 .label phase = reserve(1)
@@ -15,10 +19,8 @@
 .label seconds = reserve(1)  
 .label secondsc = reserve(1)  
 .label level = reserve(1)
-.const frameRaster = 251 
-.const landingMargin = 24
 .label xscroll = reserve(1)
-.label xscrollHandlers = reserve(16)
+.label nextFrameISR = reserve(2)
 
 .macro scankey(col) {
 	lda #((1 << col) ^ $ff)
@@ -30,7 +32,6 @@
 .macro animate() {
 	jmp (aniptr)
 }
-
 
 .macro initFrame() {
 	ldy #frdiv
@@ -45,10 +46,6 @@
 	sta level
 	lda #$f
 	sta xscroll
-	initFrog()
-	initLily()
-	loadLevel(level)
-	mov16 #finishFrame : aniptr
 
 	// trim the border
 	//lda $d016
@@ -67,13 +64,33 @@
 	lda #frameRaster
 	sta $d012
 
+	initFrog()
+	initLily()
+	loadLevel(level)
 	initBackground()
+	mov16 #finishFrame : aniptr
 	setInterrupt(frameISR)
+
+	// enable interrupt
 	lda #1
 	sta $d01a
 	cli
 
 }
+
+*=* "preFrameISR"
+preFrameISR:
+	startISR()
+	.break
+	copyDblToRam()
+	mov16 nextFrameISR : $fffe
+	lda #frameRaster
+	sta $d012
+	.break
+pfdone:	asl $d019
+	finishISR()
+
+*=* "finishFrame"
 finishFrame:
 	dec xscroll
 	lda #$f
@@ -87,17 +104,18 @@ finishFrame:
 	ora $d016
 	sta $d016
 	lda xscroll
-	cmp #$f
+	cmp #$e
+	bne !+
+	mov16 $fffe : nextFrameISR
+	setInterrupt(preFrameISR)
+	lda #preFrameRaster
+	sta $d012
+	jmp fdone
+!:	cmp #$f
 	bne fdone
 	switchBank()
 fdone:	asl $d019
-	pla
-	tay
-	pla
-	tax
-	pla
-	plp
-	rti
+	finishISR()
 
 
 *=* "Animation Handlers"
@@ -142,9 +160,10 @@ ph3ani:	pushFrogRight(frspd)
 .macro jmpstop() {
 	SIDgate(1, 0)
 }
-*=* "Frame ISR"
+
+*=* "frameISR"
 frameISR:
-	php; pha; txa; pha; tya; pha
+	startISR()
 	moveLily()
 	lda keyheld
 	beq !+
@@ -274,35 +293,30 @@ absfound: cmp #landingMargin
 	bpl miss
 	jmp hit
 miss:	setInterrupt(missed)
-	lda #0
-	sta seconds
+	mov #0 : seconds
 	mov #15 : secondsc
 	SIDfreq(1, $0F00)
 	SIDgate(1, 1)
 	animate()
-hit:	inc [$0400 + 41]
-	mov16 #finishFrame : aniptr
+hit:	mov16 #finishFrame : aniptr
 	loadSprite(frog2, 3)
 	loadSprite(blank, 0)
 	loadSprite(blank, 1)
 	loadSprite(blank, 2)
 	setInterrupt(landed)
-	lda #0
-	sta seconds
+	mov #0 : seconds
 	mov #15 : secondsc
 	SIDfreq(1, $0F00)
 	SIDgate(1, 1)
 	jmp finishFrame
 
-missed:	php; pha; txa; pha; tya; pha
+missed:	startISR()
 	moveLily()
 	dec secondsc
 	bne mlks
 	mov #15 : secondsc
+	inc seconds
 	lda seconds
-	clc
-	adc #1
-	sta seconds
 	cmp #1
 	beq lotone
 	SIDgate(1, 0)
@@ -359,14 +373,12 @@ mcomplete: lda #0
 	setInterrupt(frameISR)
 	jmp finishFrame
 
-landed:	php; pha; txa; pha; tya; pha
+landed:	startISR()
 	dec secondsc
 	bne lks
 	mov #15 : secondsc
+	inc seconds
 	lda seconds
-	clc
-	adc #1
-	sta seconds
 	cmp #1
 	beq hitone
 	SIDgate(1, 0)

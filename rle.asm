@@ -1,5 +1,7 @@
 
 .macro rleNextByte(resetV, readV, runCount, runByte) {
+	txa
+	pha
 	lda runCount
 	beq !+
 	dec runCount
@@ -22,6 +24,7 @@
 reset:  mov16 #resetV : readV
 	mov #0 : runCount
 	jmp !--
-done:
+done:	pla
+	tax
 
 }

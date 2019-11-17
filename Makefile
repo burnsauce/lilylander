@@ -1,5 +1,4 @@
-main.prg: main.asm frame.asm game.asm common.asm sprites.asm \
-		sprlib.asm bg.asm sid.asm
+main.prg: *.asm
 	java -jar KickAss.jar -cfgfile build.cfg main.asm
 clean:
 	rm *.prg

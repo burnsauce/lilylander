@@ -1,113 +1,90 @@
-.segment Code "Double-buffering Code"
-.label sprPtr = reserve(2)
+.segment Code 
 .label vicBank = reserve(1)
 
 .macro switchBank() {
-/*
-	ldy #0
-	lda vicBank
-!:	bne !+
-	lda sprp2, y
-	sta sprp1, y
-	iny
-	cpy #8
-	bne !-
-	mov16 #sprp1 : sprPtr
-	jmp !++
-!:	lda sprp1, y
-	sta sprp2, y
-	iny
-	cpy #8
-	bne !-
-	mov16 #sprp2 : sprPtr
-!:	
-*/
-	lda vicBank
-	eor #2
-	sta vicBank
 	lda $dd00
 	eor #2
 	sta $dd00
+	and #2
+	sta vicBank
 }
+
 
 .macro initDblBuf() {
 	mov #2 : vicBank
-	mov16 #sprp1 : sprPtr
 }
+
 .macro copyDblBuf() {
 	memcpy #bmb1 : #bmb2 : #$1f40
 	memcpy #smb1 : #smb2 : #$3f8
+	memcpy #$d800 : #rmb : #$3f8
 	memcpy #sprbank1 : #sprbank2 : #sprdata_size
 }
+
 .label dblr = reserve()
 .label dblw = reserve()
+.label dblt = reserve(1)
 
-copyDblBitmap:
+.macro copyDblBitmap() {
 	ldy #0
 	ldx #25
+	mov #39 : dblt
 	lda vicBank
 	bne !+
 	mov16 #bmb2 + 8 : dblr
 	mov16 #bmb1 : dblw
-	mov16 #bmb1 + 39 * 8 : wrV2
-	jmp crow
+	mov16 #bmb1 + 39 * 8 : wrV
+	jmp block
 !:	mov16 #bmb1 + 8 : dblr
 	mov16 #bmb2 : dblw
-	mov16 #bmb2 + 39 * 8: wrV2
-crow:	tya
-	pha
-	ldy #0
+	mov16 #bmb2 + 39 * 8 : wrV
+
+	// copy columns 1-40
 block:	lda (dblr),y
 	sta (dblw),y
 	iny
 	cpy #8
 	bne block
-	pla
-	tay
-	iny
-	add16 dblr : #8 : dblr
-	add16 dblw : #8 : dblw
-	cpy #39
-	bne crow 
 	ldy #0
 	add16 dblr : #8 : dblr
 	add16 dblw : #8 : dblw
+	dec dblt
+	bne block
+	mov #39 : dblt
+	add16 dblr : #8 : dblr
+	add16 dblw : #8 : dblw
 	dex
-	bne crow
+	bne block
 
-	// prepare bitmap decode
-	mov #8 : colbyte
+	// Decode RLE Column
 	ldy #0 
-	sty row
-col:	mov16 wrV2 : wrV
-	mla320(row, wrV)
+	ldx #25
 block2:	rleNextByte(bitmap, breadV, brunCount, brunByte)
 	lda brunByte
 	sta (wrV),y
-	inc16 wrV
-	dec colbyte
+	iny
+	cpy #8
 	bne block2
-	lda #8
-	sta colbyte
-	inc row
-	lda row
-	cmp #25
-	beq !+
-	jmp col
-!:	rts
+	ldy #0
+	add16 wrV : #40 * 8 : wrV
+	dex
+	bne block2
+}
 
-copyDblMatrix:
+.macro copyDblMatrix() {
 	ldy #0
 	ldx #25
 	lda vicBank
 	bne !+
 	mov16 #smb2 + 1 : dblr
 	mov16 #smb1 : dblw
-	mov16 #smb1 + 39 : wrV2
+	mov16 #smb1 + 39 : wrV
 	jmp !++
 !:	mov16 #smb1 + 1 : dblr
 	mov16 #smb2 : dblw
-	mov16 #smb2 + 39 : wrV2
+	mov16 #smb2 + 39 : wrV
+
+	// Copy columns 1-40
 !:	lda (dblr),y
 	sta (dblw),y
 	iny
@@ -119,22 +96,18 @@ copyDblMatrix:
 	dex
 	bne !-
 
-	// prepare matrix decode
+	// Decode RLE Column
 	ldy #0
-	sty row
-col2:	mov16 wrV2 : wrV
-	mla40(row, wrV)
-	rleNextByte(matrix, mreadV, mrunCount, mrunByte)
+	ldx #25
+!:	rleNextByte(matrix, mreadV, mrunCount, mrunByte)
 	lda mrunByte
 	sta (wrV),y
-	inc row
-	lda row
-	cmp #25
-	beq !+
-	jmp col2
-!:	rts
+	add16 wrV : #40 : wrV
+	dex
+	bne !- 
+}
 
-copyDblRam:
+.macro copyDblRam() {
 	mov16 #$d800 + 1 : dblr
 	mov16 #rmb : dblw
 	ldy #0
@@ -149,22 +122,35 @@ copyDblRam:
 	add16 dblw : #40 : dblw
 	dex
 	bne !-
-	rts
 
-copyDblToRam:
-	mov16 #$d800 : dblw
-	mov16 #rmb : dblr
+	// Unpack RLE Column
+	mov16 #rmb + 39 : wrV
 	ldy #0
 	ldx #25
-!:	lda (dblr),y
-	sta (dblw),y
+!:	rleNextByte(colorram, rreadV, rrunCount, rrunByte)
+	lda rrunByte
+	sta (wrV),y
+	add16 wrV : #40 : wrV
+	dex
+	bne !-
+}
+
+.label dblw2 = reserve()
+.label dblr2 = reserve()
+.macro copyDblToRam() {
+	mov16 #$d800 : dblw2
+	mov16 #rmb : dblr2
+	ldy #0
+	ldx #25
+!:	lda (dblr2),y
+	sta (dblw2),y
 	iny
 	cpy #40
 	bne !-
 	ldy #0
-	add16 dblr : #40 : dblr
-	add16 dblw : #40 : dblw
+	add16 dblr2 : #40 : dblr2
+	add16 dblw2 : #40 : dblw2
 	dex
 	bne !-
-	rts
+}
 
