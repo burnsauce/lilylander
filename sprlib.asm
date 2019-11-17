@@ -21,7 +21,8 @@
 .macro loadSprite(location, num) {
 	lda #location
 	ldy #num
-	sta (sprPtr), y
+	sta sprp1, y
+	sta sprp2, y
 	.eval location = (((location + 1) * 64) - 1) + sprbase
 	lda location
 	sta lsarg

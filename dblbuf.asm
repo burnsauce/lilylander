@@ -3,6 +3,7 @@
 .label vicBank = reserve(1)
 
 .macro switchBank() {
+/*
 	ldy #0
 	lda vicBank
 !:	bne !+
@@ -19,9 +20,10 @@
 	cpy #8
 	bne !-
 	mov16 #sprp2 : sprPtr
-!:	lda vicBank
+!:	
+*/
+	lda vicBank
 	eor #2
-	.break
 	sta vicBank
 	lda $dd00
 	eor #2
@@ -45,7 +47,6 @@ copyDblBitmap:
 	ldx #25
 	lda vicBank
 	bne !+
-	.break
 	mov16 #bmb2 + 8 : dblr
 	mov16 #bmb1 : dblw
 	mov16 #bmb1 + 39 * 8 : wrV2
