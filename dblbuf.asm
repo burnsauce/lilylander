@@ -48,9 +48,11 @@ copyDblBitmap:
 	.break
 	mov16 #bmb2 + 8 : dblr
 	mov16 #bmb1 : dblw
+	mov16 #bmb1 + 39 * 8 : wrV2
 	jmp crow
 !:	mov16 #bmb1 + 8 : dblr
 	mov16 #bmb2 : dblw
+	mov16 #bmb2 + 39 * 8: wrV2
 crow:	tya
 	pha
 	ldy #0
@@ -71,7 +73,27 @@ block:	lda (dblr),y
 	add16 dblw : #8 : dblw
 	dex
 	bne crow
-	rts
+
+	// prepare bitmap decode
+	mov #8 : colbyte
+	ldy #0 
+	sty row
+col:	mov16 wrV2 : wrV
+	mla320(row, wrV)
+block2:	rleNextByte(bitmap, breadV, brunCount, brunByte)
+	lda brunByte
+	sta (wrV),y
+	inc16 wrV
+	dec colbyte
+	bne block2
+	lda #8
+	sta colbyte
+	inc row
+	lda row
+	cmp #25
+	beq !+
+	jmp col
+!:	rts
 
 copyDblMatrix:
 	ldy #0
@@ -80,9 +102,11 @@ copyDblMatrix:
 	bne !+
 	mov16 #smb2 + 1 : dblr
 	mov16 #smb1 : dblw
+	mov16 #smb1 + 39 : wrV2
 	jmp !++
 !:	mov16 #smb1 + 1 : dblr
 	mov16 #smb2 : dblw
+	mov16 #smb2 + 39 : wrV2
 !:	lda (dblr),y
 	sta (dblw),y
 	iny
@@ -93,7 +117,21 @@ copyDblMatrix:
 	add16 dblw : #40 : dblw
 	dex
 	bne !-
-	rts
+
+	// prepare matrix decode
+	ldy #0
+	sty row
+col2:	mov16 wrV2 : wrV
+	mla40(row, wrV)
+	rleNextByte(matrix, mreadV, mrunCount, mrunByte)
+	lda mrunByte
+	sta (wrV),y
+	inc row
+	lda row
+	cmp #25
+	beq !+
+	jmp col2
+!:	rts
 
 copyDblRam:
 	mov16 #$d800 + 1 : dblr
