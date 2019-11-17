@@ -34,8 +34,8 @@
 }
 
 .macro initFrame() {
-	ldy #frdiv
-	sty phcount
+	mov #12 : frdiv
+	sta phcount
 	lda #0
 	sta phase
 	sta jumping
@@ -114,7 +114,8 @@ finishFrame:
 	cmp #$f
 	bne fdone
 	switchBank()
-	switchToPreframe()
+	copyDblToRam()
+	//switchToPreframe()
 fdone:	asl $d019
 	finishISR()
 
@@ -243,10 +244,8 @@ skipkey:
 	// --------------- phase update ----------------
 !:	ldy frdiv
 	sty phcount
-	lda phase					 
-	clc
-	adc #1
-	sta phase
+	inc phase
+	lda phase
 	cmp #1
 	beq !+
 	jmp ph2
@@ -286,11 +285,11 @@ ph0:	lda #0
 	sbc $d00e // lily
 	clc
 	adc #[landingMargin / 2]
-	bpl absfound
+	bpl gotabs
 	eor #$ff
 	clc
 	adc #1
-absfound: cmp #landingMargin
+gotabs:	cmp #landingMargin
 	bpl miss
 	jmp hit
 miss:	setInterrupt(missed)
