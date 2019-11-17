@@ -204,11 +204,13 @@ class OutputData:
         bm = []
         sm = []
         rd = []
-        for x in range(40):
-            for y in range(25):
-                bm.extend(self.bitmap[y * 40 + x])
-                sm.append(self.screenmatrix[y * 40 + x])
-                rd.append(self.ramdata[y * 40 + x])
+        height = 25
+        width = im.size[0] / 4
+        for x in range(width):
+            for y in range(height):
+                bm.extend(self.bitmap[y * width + x])
+                sm.append(self.screenmatrix[y * width + x])
+                rd.append(self.ramdata[y * width + x])
         self.bitmap = bm
         self.screenmatrix = sm
         self.ramdata = rd
