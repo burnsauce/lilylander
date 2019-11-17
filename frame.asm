@@ -1,4 +1,4 @@
-* = * "Frame Code"
+.segment Code 
 .label frdiv = reserve(1)
 .label frspd = reserve(1)
 
@@ -30,7 +30,8 @@
 .macro animate() {
 	jmp (aniptr)
 }
-.macro finishFrame() {
+
+finishFrame:
 	dec xscroll
 	lda #7
 	and xscroll
@@ -40,53 +41,20 @@
 	ora xscroll
 	sta $d016
 	lda xscroll
-	cmp #0
-	beq !+
-	jmp f1
-!:	
-f1:	cmp #1
-	beq !+
-	jmp f2
-!:	jmp done
-f2:	cmp #2
-	beq !+
-	jmp f3
-!:	jmp done
-f3:	cmp #3
-	beq !+
-	jmp f4
-!:	jmp done
-f4:	cmp #4
-	beq !+
-	jmp f5
-!:	jmp done
-f5:	cmp #5
-	beq !+
-	jmp f6
-!:	jmp done
-f6:	cmp #6
-	beq !+
-	jmp f7
-!:	jmp done
-f7:	switchBank()
-/*
-	ldy $d016
-	lda $d016
-	and #$f8
-	sta $d016
-	dey	
-	tya
-	and #7
-	ora $d016
-	sta $d016
-*/
+	cmp #7
+	bne fdone
 	switchBank()
-done:	asl $d019
+fdone:	asl $d019
+	pla
+	tay
+	pla
+	tax
+	pla
+	plp
 	rti
-}
 
-noAnimation:
-	finishFrame()
+
+*=* "Animation Handlers"
 
 ph1ani:	pushFrogRight(frspd)
 	pushFrogUp(3)
@@ -94,7 +62,7 @@ ph1ani:	pushFrogRight(frspd)
 	adc cfreq + 1
 	sta cfreq + 1
 	SIDfreqd(1, cfreq)
-	finishFrame()
+	jmp finishFrame
 
 ph2ani:	pushFrogRight(frspd)
 	lda frdiv
@@ -107,11 +75,11 @@ ph2ani:	pushFrogRight(frspd)
 frogdown:
 	pushFrogDown(2)
 ph2ani1:
-	finishFrame()
+	jmp finishFrame
 
 ph3ani:	pushFrogRight(frspd)
 	pushFrogDown(3)
-	finishFrame()
+	jmp finishFrame
 
 .macro jmpsound() {
 	lda #$00
@@ -128,8 +96,10 @@ ph3ani:	pushFrogRight(frspd)
 .macro jmpstop() {
 	SIDgate(1, 0)
 }
-
-frameISR:	moveLily()
+*=* "Frame ISR"
+frameISR:
+	php; pha; txa; pha; tya; pha
+	moveLily()
 	lda keyheld
 	beq !+
 	jmp !++
@@ -265,7 +235,7 @@ miss:	setInterrupt(missed)
 	SIDgate(1, 1)
 	animate()
 hit:	inc [$0400 + 41]
-	mov16 #noAnimation : aniptr
+	mov16 #finishFrame : aniptr
 	loadSprite(frog2, 3)
 	loadSprite(blank, 0)
 	loadSprite(blank, 1)
@@ -276,9 +246,10 @@ hit:	inc [$0400 + 41]
 	mov #15 : secondsc
 	SIDfreq(1, $0F00)
 	SIDgate(1, 1)
-	finishFrame()
+	jmp finishFrame
 
-missed:	moveLily()
+missed:	php; pha; txa; pha; tya; pha
+	moveLily()
 	dec secondsc
 	bne mlks
 	mov #15 : secondsc
@@ -327,22 +298,23 @@ mlks:	lda #$ff
 	bpl !+
 	animate()
 !:	mov #15 : secondsc
-	finishFrame()
+	jmp finishFrame
 mcont:	lda #1
 	sta keyheld
 	lda seconds
 	cmp #2
 	bpl !+
 	animate()
-!:	finishFrame()
+!:	jmp finishFrame
 mcomplete: lda #0
 	sta keyheld
 	initFrog()
-	mov16 #noAnimation : aniptr
+	mov16 #finishFrame : aniptr
 	setInterrupt(frameISR)
-	finishFrame()
+	jmp finishFrame
 
-landed:	dec secondsc
+landed:	php; pha; txa; pha; tya; pha
+	dec secondsc
 	bne lks
 	mov #15 : secondsc
 	lda seconds
@@ -385,10 +357,10 @@ lks:	lda #$ff
 !:	lda keyheld
 	beq !+
 	jmp complete
-!:	finishFrame()
+!:	jmp finishFrame
 continue: lda #1
 	sta keyheld
-	finishFrame()
+	jmp finishFrame
 complete: 
 	inc level
 	loadLevel(level)
@@ -397,7 +369,7 @@ complete:
 	SIDgate(1, 0)
 	initFrog()
 	setInterrupt(frameISR)
-	finishFrame()
+	jmp finishFrame
 
 .macro initFrame() {
 	ldy #frdiv
@@ -417,7 +389,7 @@ complete:
 	initFrog()
 	initLily()
 	loadLevel(level)
-	mov16 #noAnimation : aniptr
+	mov16 #finishFrame : aniptr
 
 	// trim the border
 	//lda $d016

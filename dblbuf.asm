@@ -1,34 +1,4 @@
-.var 	dblnext = *
-
-.label 	smb1 = $4000
-* = smb1 "Screen Matrix Buffer 1" virtual
-	.fill $3f8, 0
-.label sprp1 = *
-
-*=* + 8	"Bank 1 Sprites"
-.label sprbank1 = *
-#import "sprites.asm"
-.label 	smb2 = $c000
-
-* = smb2 "Screen Matrix Buffer 2" virtual
-	.fill $3f8, 0
-.label sprp2 = *
-
-*=* + 8	"Bank 2 Sprites" virtual
-.label sprbank2 = *
-	.fill sprdata_size, 0
-
-.label 	bmb1 = $6000
-* = bmb1 "Bitmap Buffer 1" virtual
-	.fill $1f40, 0
-
-
-.label 	bmb2 = $e000
-*= 	bmb2 "Bitmap Buffer 2" virtual
-	.fill $1f40, 0
-
-* = dblnext
-
+.segment Code "Double-buffering Code"
 .label sprPtr = reserve(2)
 .label vicBank = reserve(1)
 
@@ -51,5 +21,134 @@
 	memcpy #smb1 : #smb2 : #$3f8
 	memcpy #sprbank1 : #sprbank2 : #sprdata_size
 }
+/*
+.segment Data "Bitmap Column 1 LUT"
+bm1col1addr:
+	.for(var row=0; row<25; row++) {
+		.word bmb1 + row * 40 * 8 + 8
+	}
 
-*=* "Program Code"
+bm2col1addr:
+	.for(var row=0; row<25; row++) {
+		.word bmb2 + row * 40 * 8 + 8
+	}
+sm1col1addr:
+	.for(var row=0; row<25; row++) {
+		.word smb1 + row * 40 + 1
+	}
+sm2col1addr:
+	.for(var row=0; row<25; row++) {
+		.word smb2 + row * 40 + 1
+	}
+rmcol1addr:
+	.for(var row=0; row<25; row++) {
+		.word $d800 + row * 40 + 1
+	}
+rmbcol1addr:
+	.for(var row=0; row<25; row++) {
+		.word rmb + row * 40 + 1
+	}
+	
+
+.pseudocommand loadFromTable t : i : p {
+	pha
+	txa
+	pha
+	lda i
+	asl
+	tax
+	lda t,x
+	sta p
+	inx
+	lda t,x
+	sta _16bitNext(p)
+	pla
+	tax
+	pla
+}
+*/
+.segment Code
+
+.label dblr = reserve()
+.label dblw = reserve()
+copyDblBitmap:
+	//loadFromTable #bm1col1addr : dblarg : dblr
+	
+	mov16 #bmb1 + 8 : dblr
+	mov16 #bmb2 : dblw
+	ldy #0
+	ldx #25
+crow:	tya
+	pha
+	ldy #0
+block:	lda (dblr),y
+	sta (dblw),y
+	iny
+	cpy #8
+	bne block
+	pla
+	tay
+	iny
+	add16 dblr : #8 : dblr
+	add16 dblw : #8 : dblw
+	cpy #39
+	bne crow 
+	ldy #0
+	add16 dblr : #8 : dblr
+	add16 dblw : #8 : dblw
+	dex
+	bne crow
+	rts
+
+copyDblMatrix:
+	// matrix
+	mov16 #smb1 + 1 : dblr
+	mov16 #smb2 : dblw
+	ldy #0
+	ldx #25
+!:	lda (dblr),y
+	sta (dblw),y
+	iny
+	cpy #39
+	bne !-
+	ldy #0
+	add16 dblr : #40 : dblr
+	add16 dblw : #40 : dblw
+	dex
+	bne !-
+	rts
+
+copyDblRam:
+	mov16 #$d800 + 1 : dblr
+	mov16 #rmb : dblw
+	ldy #0
+	ldx #25
+!:	lda (dblr),y
+	sta (dblw),y
+	iny
+	cpy #39
+	bne !-
+	ldy #0
+	add16 dblr : #40 : dblr
+	add16 dblw : #40 : dblw
+	dex
+	bne !-
+	rts
+
+copyDblToRam:
+	mov16 #$d800 : dblw
+	mov16 #rmb : dblr
+	ldy #0
+	ldx #25
+!:	lda (dblr),y
+	sta (dblw),y
+	iny
+	cpy #40
+	bne !-
+	ldy #0
+	add16 dblr : #40 : dblr
+	add16 dblw : #40 : dblw
+	dex
+	bne !-
+	rts
+

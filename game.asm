@@ -1,4 +1,4 @@
-* = * "Game Code"
+.segment Code
 //.var lilystate = reserve(1)
 //.var lilymin = reserve(1)
 //.var lilymax = reserve(1)

@@ -1,3 +1,4 @@
+.segment Code "Raster Code"
 * = * "Raster Code"
 
 .const rasterhi 	= $d011

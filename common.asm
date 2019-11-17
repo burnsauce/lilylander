@@ -1,3 +1,4 @@
+.segment Code
 .var nextVar = $2
 .var savedVar = 0
 

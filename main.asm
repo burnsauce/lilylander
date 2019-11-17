@@ -4,31 +4,35 @@
 // main.asm
 
 #import "registers.asm"
-* = $801 "Bootstrap"
-BasicUpstart(init)
-     
-* = $810 "Program Code"
-//.var lowaddr = *
+#import "segments.asm"
+
+.segment Code
 #import "common.asm"
+#import "multiply.asm"
 #import "dblbuf.asm"
 #import "bg.asm"
 #import "sid.asm"
 #import "sprlib.asm"
 #import "game.asm"
-//#import "raster.asm"
 #import "frame.asm"
 
+.segment InitCode
 .const kcls = $ff81
 init:	jsr kcls
 	lda #$35	      // disable the BASIC /K ROM
 	sta $01
-
 	initDblBuf()
 	initSID()
 	//initBackground()
 	initFrame()
-	
-loop:	jmp loop
+	jmp loop
 
-highest_code:
-      
+.segment Code "Main Loop"
+loop:	lda xscroll
+	cmp #0
+	bne loop
+	jsr copyDblBitmap
+	jsr copyDblMatrix
+	jsr copyDblRam
+	jsr copyDblToRam
+	jmp loop

@@ -1,3 +1,4 @@
+.segment Code 
 .const spren    = $d015
 .const sprmc    = $d01c
 .const sprcolor = $d027
@@ -18,13 +19,10 @@
 }
 
 .macro loadSprite(location, num) {
-	.print "Loading sprite at location $" + toHexString(location) + " to slot " + num
-	
 	lda #location
 	ldy #num
 	sta (sprPtr), y
 	.eval location = (((location + 1) * 64) - 1) + sprbase
-	.print "Address: $" + toHexString(location - $3f)
 	lda location
 	sta lsarg
 	and #$80	 // multicolor
