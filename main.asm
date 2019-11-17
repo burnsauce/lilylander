@@ -23,16 +23,15 @@ init:	jsr kcls
 	sta $01
 	initDblBuf()
 	initSID()
-	//initBackground()
 	initFrame()
 	jmp loop
 
 .segment Code "Main Loop"
 loop:	lda xscroll
-	cmp #0
+	cmp #$e
 	bne loop
 	jsr copyDblBitmap
 	jsr copyDblMatrix
-	jsr copyDblRam
-	jsr copyDblToRam
+	//jsr copyDblRam
+	//jsr copyDblToRam
 	jmp loop

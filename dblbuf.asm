@@ -3,81 +3,54 @@
 .label vicBank = reserve(1)
 
 .macro switchBank() {
-	memcpy #sprp1 : #sprp2 : #8
+	ldy #0
+	lda vicBank
+!:	bne !+
+	lda sprp2, y
+	sta sprp1, y
+	iny
+	cpy #8
+	bne !-
+	mov16 #sprp1 : sprPtr
+	jmp !++
+!:	lda sprp1, y
+	sta sprp2, y
+	iny
+	cpy #8
+	bne !-
+	mov16 #sprp2 : sprPtr
+!:	lda vicBank
+	eor #2
+	.break
+	sta vicBank
 	lda $dd00
 	eor #2
 	sta $dd00
-	and #2
-	sta vicBank
 }
 
 .macro initDblBuf() {
 	mov #2 : vicBank
 	mov16 #sprp1 : sprPtr
 }
-
 .macro copyDblBuf() {
 	memcpy #bmb1 : #bmb2 : #$1f40
 	memcpy #smb1 : #smb2 : #$3f8
 	memcpy #sprbank1 : #sprbank2 : #sprdata_size
 }
-/*
-.segment Data "Bitmap Column 1 LUT"
-bm1col1addr:
-	.for(var row=0; row<25; row++) {
-		.word bmb1 + row * 40 * 8 + 8
-	}
-
-bm2col1addr:
-	.for(var row=0; row<25; row++) {
-		.word bmb2 + row * 40 * 8 + 8
-	}
-sm1col1addr:
-	.for(var row=0; row<25; row++) {
-		.word smb1 + row * 40 + 1
-	}
-sm2col1addr:
-	.for(var row=0; row<25; row++) {
-		.word smb2 + row * 40 + 1
-	}
-rmcol1addr:
-	.for(var row=0; row<25; row++) {
-		.word $d800 + row * 40 + 1
-	}
-rmbcol1addr:
-	.for(var row=0; row<25; row++) {
-		.word rmb + row * 40 + 1
-	}
-	
-
-.pseudocommand loadFromTable t : i : p {
-	pha
-	txa
-	pha
-	lda i
-	asl
-	tax
-	lda t,x
-	sta p
-	inx
-	lda t,x
-	sta _16bitNext(p)
-	pla
-	tax
-	pla
-}
-*/
-.segment Code
-
 .label dblr = reserve()
 .label dblw = reserve()
+
 copyDblBitmap:
-	//loadFromTable #bm1col1addr : dblarg : dblr
-	
-	mov16 #bmb1 + 8 : dblr
-	mov16 #bmb2 : dblw
 	ldy #0
 	ldx #25
+	lda vicBank
+	bne !+
+	.break
+	mov16 #bmb2 + 8 : dblr
+	mov16 #bmb1 : dblw
+	jmp crow
+!:	mov16 #bmb1 + 8 : dblr
+	mov16 #bmb2 : dblw
 crow:	tya
 	pha
 	ldy #0
@@ -101,11 +74,15 @@ block:	lda (dblr),y
 	rts
 
 copyDblMatrix:
-	// matrix
-	mov16 #smb1 + 1 : dblr
-	mov16 #smb2 : dblw
 	ldy #0
 	ldx #25
+	lda vicBank
+	bne !+
+	mov16 #smb2 + 1 : dblr
+	mov16 #smb1 : dblw
+	jmp !++
+!:	mov16 #smb1 + 1 : dblr
+	mov16 #smb2 : dblw
 !:	lda (dblr),y
 	sta (dblw),y
 	iny

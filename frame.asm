@@ -31,17 +31,63 @@
 	jmp (aniptr)
 }
 
+
+.macro initFrame() {
+	ldy #frdiv
+	sty phcount
+	lda #0
+	sta phase
+	sta jumping
+	sta keyheld
+	sta powerLevel
+	sta seconds
+	lda #1
+	sta level
+	lda #$f
+	sta xscroll
+	initFrog()
+	initLily()
+	loadLevel(level)
+	mov16 #finishFrame : aniptr
+
+	// trim the border
+	//lda $d016
+	//and #((1 << 3) ^ $ff)
+	//sta $d016
+	lda #7
+	ora XSCROL
+	sta XSCROL
+
+	// set interrupt vector
+	sei
+	lda #$7f
+	sta $dc0d
+	and $d011
+	sta $d011
+	lda #frameRaster
+	sta $d012
+
+	initBackground()
+	setInterrupt(frameISR)
+	lda #1
+	sta $d01a
+	cli
+
+}
 finishFrame:
 	dec xscroll
-	lda #7
+	lda #$f
 	and xscroll
 	sta xscroll
 	lda #$f8
 	and $d016
-	ora xscroll
 	sta $d016
 	lda xscroll
-	cmp #7
+	lsr
+	ora $d016
+	sta $d016
+	lda xscroll
+	cmp #$f
 	bne fdone
 	switchBank()
 fdone:	asl $d019
@@ -370,44 +416,3 @@ complete:
 	initFrog()
 	setInterrupt(frameISR)
 	jmp finishFrame
-
-.macro initFrame() {
-	ldy #frdiv
-	sty phcount
-	lda #0
-	sta phase
-	sta jumping
-	sta keyheld
-	sta powerLevel
-	sta seconds
-	lda #1
-	sta level
-	lda #7
-	sta xscroll
-	lda #48
-	//sta [$0400 + 41]
-	initFrog()
-	initLily()
-	loadLevel(level)
-	mov16 #finishFrame : aniptr
-
-	// trim the border
-	//lda $d016
-	//and #((1 << 3) ^ $ff)
-	//sta $d016
-	// set interrupt vector
-	sei
-	lda #$7f
-	sta $dc0d
-	and $d011
-	sta $d011
-	lda #frameRaster
-	sta $d012
-
-	initBackground()
-	setInterrupt(frameISR)
-	lda #1
-	sta $d01a
-	cli
-
-}

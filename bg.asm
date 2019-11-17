@@ -22,7 +22,6 @@
 	and #%11111100
 	ora #%00000010
 	sta $dd00
-
 	initRiver(bmb1, smb1, ramAddr)
 	copyDblBuf()
 }
