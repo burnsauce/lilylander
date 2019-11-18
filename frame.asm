@@ -6,8 +6,8 @@
 .const DDRA	 = $dc02
 .const PRB	 = $dc01
 .const DDRB	 = $dc03
-.const frameRaster = 250
-.const preFrameRaster = 1
+.const frameRaster = 251
+.const preFrameRaster = 25
 .const landingMargin = 24
 
 .label aniptr = reserve()
@@ -47,10 +47,7 @@
 	lda #$f
 	sta xscroll
 
-	// trim the border
-	//lda $d016
-	//and #((1 << 3) ^ $ff)
-	//sta $d016
+	// preset full right scroll
 	lda #7
 	ora XSCROL
 	sta XSCROL
@@ -58,34 +55,37 @@
 	// set interrupt vector
 	lda #$7f
 	and $d011
-	ora #1 << 4
-	sta $d011
+	// turn off the display
+	//ora #1 << 4
+	//sta $d011
 	lda #frameRaster
 	sta $d012
 
+	initBackground()
 	initFrog()
 	initLily()
 	loadLevel(level)
-	initBackground()
 	mov16 #finishFrame : aniptr
 	setInterrupt(frameISR)
+
+	// wait for high raster
+!:	lda $d011
+	bpl !-
 
 	// enable interrupt
 	lda #1
 	sta $d01a
 	cli
-
 }
 
 *=* "preFrameISR"
+.align $100
 preFrameISR:
 	startISR()
-	.break
 	copyDblToRam()
 	mov16 nextFrameISR : $fffe
 	lda #frameRaster
 	sta $d012
-	.break
 	asl $d019
 	finishISR()
 
@@ -95,7 +95,8 @@ preFrameISR:
 	lda #preFrameRaster
 	sta $d012
 }
-
+.label ftmp = reserve(1)
+.align $100
 *=* "finishFrame"
 finishFrame:
 	dec xscroll
@@ -104,17 +105,31 @@ finishFrame:
 	sta xscroll
 	lda #$f8
 	and $d016
-	sta $d016
+	sta ftmp
 	lda xscroll
 	lsr
-	ora $d016
+	ora ftmp
 	sta $d016
 	lda xscroll
-	cmp #$f
-	bne fdone
-	switchBank()
+/*	cmp #$0
+	bne fswitch
+!:	lda $d011
+	bpl !-
+!:	lda $d011
+	bmi !-
+!:	lda $d012
+	cmp #14
+	bmi !-
 	copyDblToRam()
-	//switchToPreframe()
+	jmp fdone
+*/
+fswitch:
+	cmp #$f
+	beq !+
+	jmp fdone
+!:	switchBank()
+	doSwitchBank()
+	copyDblToRam()
 fdone:	asl $d019
 	finishISR()
 
@@ -146,22 +161,7 @@ ph3ani:	pushFrogRight(frspd)
 	pushFrogDown(3)
 	jmp finishFrame
 
-.macro jmpsound() {
-	lda #$00
-	sta cfreq
-	lda #$08
-	sta cfreq + 1
-	SIDvol(10)
-	SIDtri(1)
-	SIDadsr(1, 1, 7, 15, 2)
-	SIDfreqd(1, cfreq)
-	SIDgate(1, 1)
-}
-
-.macro jmpstop() {
-	SIDgate(1, 0)
-}
-
+.align $100
 *=* "frameISR"
 frameISR:
 	startISR()

@@ -1,5 +1,3 @@
-.label sprdata_start = *
-.align $40
 #if !SPRITES_LOADED
 .label wix1 = mod(*, $4000) / 64
 #endif
@@ -199,4 +197,3 @@
 .byte  $00,$00,$00,$00,$00,$00,$00,$00
 .byte  $00,$00,$00,$00,$00,$00,$00,$80 // spr17 blank
 #define SPRITES_LOADED
-.label sprdata_size = * - sprdata_start

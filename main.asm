@@ -36,9 +36,11 @@ init:	sei
 	initDblBuf()
 	initSID()
 	initFrame()
-	jmp loop
+	jmp ready 
 
 .segment Code "Main Loop"
+ready:	copySprites()
+	copyDblRam()
 loop:	lda xscroll
 	cmp #$f
 	bne loop

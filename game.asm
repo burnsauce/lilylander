@@ -1,36 +1,33 @@
-.segment Code
-//.var lilystate = reserve(1)
-//.var lilymin = reserve(1)
-//.var lilymax = reserve(1)
-//.var lilyspeed = reserve(1)
 .label powerLevel = reserve(1)
 .label lilypos = reserve(1)
 .const lilyoffset  = 319 - 256
 
-.macro updatePower() {
-	ldy powerLevel
-	iny
-	sty powerLevel
-	// update the bar in matrix RAM
-	tya
-	lsr
-	tay
-	lda #160 // hash
-	sta $0400, y
-done:
+.macro jmpsound() {
+	lda #$00
+	sta cfreq
+	lda #$08
+	sta cfreq + 1
+	SIDvol(10)
+	SIDtri(1)
+	SIDadsr(1, 1, 7, 15, 2)
+	SIDfreqd(1, cfreq)
+	SIDgate(1, 1)
 }
+
+.macro jmpstop() {
+	SIDgate(1, 0)
+}
+
+.macro updatePower() {
+	inc powerLevel
+}
+
 .macro resetPower() {
-	lda #32
-	ldy #40
-!:	dey
-	sta $0400, y
-	bne !-
-	sty powerLevel
+	lda #0
+	sta powerLevel
 }
 
 .macro loadLevel(lvl) {
-//	!if .lvl = 0 {
-
 	lda #100
 	sta lilypos
 
@@ -57,6 +54,7 @@ done:
 	loadSprite(lily4, 7)
 	moveSprite(7, 0, 200 + 21)
 }
+
 .macro initFrog() {
 	.const startx = 35
 	.const starty = 180

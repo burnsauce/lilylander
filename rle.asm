@@ -1,4 +1,3 @@
-
 .macro rleNextByte(resetV, readV, runCount, runByte) {
 	txa
 	pha

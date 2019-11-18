@@ -110,5 +110,5 @@ col3:	mov16 wrV2 : wrV
 !:
 	copyDblBitmap()
 	copyDblMatrix()
-	copyDblRam()
+	//copyDblRam() Don't do this! Writes over init code
 }

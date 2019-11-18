@@ -157,3 +157,32 @@
 	cmp16 mcrptr : mcompr
 	bne !-
 }
+
+.macro fastMemCopy(from, to, size) {
+	pha
+	tya
+	pha
+	ldy #0
+	.var pages = floor(size / $100)
+	.if(pages > 0) {
+page:	.for(var i = 0; i < pages; i++) {
+	lda from + (i * $100), y
+	sta to + (i * $100), y
+	} // for
+	iny
+	beq !+
+	jmp page
+	} // if
+	.var rem = size - (pages * $100)
+!:
+	.if(rem > 0) {
+	lda from + (pages * $100), y
+	sta to + (pages * $100), y
+	iny
+	cpy #rem
+	bne !-
+	}
+	pla
+	tay
+	pla
+}

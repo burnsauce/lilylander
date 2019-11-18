@@ -1,13 +1,14 @@
-.file [name="main.prg", segments="Code,Data,Graphics1,InitCode"]
+.file [name="ll.prg", segments="Code,Data,Graphics1,InitCode"]
 .segmentdef Code [start=$810]
 .segmentdef Data [startAfter="Code"]
 .segmentdef Graphics1 [start=$4000]
 .segmentdef Graphics2 [start=$C000]
-.segmentdef Buffer [start=$8000]
-.segmentdef InitCode [start=$8000, modify="BasicUpstart", _start=$8000]
+.segmentdef Buffer [startAfter="Data", align=$100]
+.segmentdef InitCode [startAfter="Data", modify="BasicUpstart", _start=init, align=$100]
+#import "disk.asm"
 
 .segment Buffer
-.label	rmb = $8000
+.label	rmb = *
 * = rmb "Color Ram Buffer" virtual
 	.fill $3f8,0
 
@@ -17,9 +18,11 @@
 	.fill $3f8, 0
 .label sprp1 = *
 
-*=* + 8	"Bank 1 Sprites"
+.align $40
 .label sprbank1 = *
+* = * "Sprites"
 #import "sprites.asm"
+.label sprsize = * - sprbank1
 
 .label 	bmb1 = $6000
 * = bmb1 "Bitmap Buffer 1" virtual
@@ -32,9 +35,10 @@
 	.fill $3f8, 0
 .label sprp2 = *
 
-*=* + 8	"Bank 2 Sprites" virtual
+.align $40
 .label sprbank2 = *
-	.fill sprdata_size, 0
+* = * "Bank 2 Sprites" virtual
+	.fill sprsize, 0
 
 .label 	bmb2 = $e000
 *= 	bmb2 "Bitmap Buffer 2" virtual
