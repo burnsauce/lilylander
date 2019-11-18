@@ -20,6 +20,7 @@
 .label secondsc = reserve(1)  
 .label level = reserve(1)
 .label xscroll = reserve(1)
+.label scrolling = reserve(1)
 .label nextFrameISR = reserve(2)
 
 .macro scankey(col) {
@@ -42,6 +43,7 @@
 	sta keyheld
 	sta powerLevel
 	sta seconds
+	sta scrolling
 	lda #1
 	sta level
 	lda #$f
@@ -95,11 +97,22 @@ preFrameISR:
 	lda #preFrameRaster
 	sta $d012
 }
+
 .label ftmp = reserve(1)
 .align $100
 *=* "finishFrame"
 finishFrame:
-	dec xscroll
+	lda #80
+	bit scrolling
+	bne !+
+	jmp fdone
+!:	dec scrolling
+	lda scrolling
+	and #$7f
+	bne !+
+	sta scrolling
+	jmp fdone
+!:	dec xscroll
 	lda #$f
 	and xscroll
 	sta xscroll
@@ -111,28 +124,19 @@ finishFrame:
 	ora ftmp
 	sta $d016
 	lda xscroll
-/*	cmp #$0
-	bne fswitch
-!:	lda $d011
-	bpl !-
-!:	lda $d011
-	bmi !-
-!:	lda $d012
-	cmp #14
-	bmi !-
-	copyDblToRam()
+	//cmp #0
+	beq !+
+	jmp fsw
+!:	//switchToPreframe()
+	switchBank()
 	jmp fdone
-*/
-fswitch:
-	cmp #$f
+fsw:	cmp #$f
 	beq !+
 	jmp fdone
-!:	switchBank()
-	doSwitchBank()
+!:	doSwitchBank()
 	copyDblToRam()
 fdone:	asl $d019
 	finishISR()
-
 
 *=* "Animation Handlers"
 
@@ -177,6 +181,7 @@ frameISR:
 	lda #0
 	sta DDRB
 	scankey(0)
+	//scankey(7)
 	beq !+
 	jmp holding
 !:	scankey(1)
@@ -203,7 +208,8 @@ frameISR:
 !:	lda keyheld
 	bne jumpnow
 	animate()
-jumpnow:	lda #1
+jumpnow:
+	lda #1
 	sta jumping
 	sta phcount
 	lda powerLevel
@@ -218,10 +224,13 @@ jumpnow:	lda #1
 	sta frdiv
 	lda #0
 	sta keyheld
+	lda #$ff
+	sta scrolling
 	jmp skipkey
-	holding:	lda keyheld
+holding:
+	lda keyheld
 	bne !+
-jmpsound()
+	jmpsound()
 	lda #1
 	sta keyheld
 !:	lda powerLevel

@@ -31,11 +31,19 @@
 	adc _16bitNext(b)
 	sta _16bitNext(tar)
 }
+
 .pseudocommand inc16 a {
 	inc a
 	bne !+
 	inc _16bitNext(a)
 !:
+}
+
+.pseudocommand dec16 a {
+	lda a
+	bne !+
+	dec _16bitNext(a)
+!:	dec a
 }
 
 .function reserve(bytes) {

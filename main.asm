@@ -41,10 +41,17 @@ init:	sei
 .segment Code "Main Loop"
 ready:	copySprites()
 	copyDblRam()
-loop:	lda xscroll
-	cmp #$f
-	bne loop
-	copyDblBitmap()
+	lda #$80
+loop:	bit scrolling
+	beq loop
+scrl:	lda xscroll
+	cmp #$e
+	bne scrl
 	copyDblMatrix()
+	copyDblBitmap()
 	copyDblRam()
-	jmp loop
+	lda #$80
+	bit scrolling
+	beq !+
+	jmp scrl
+!:	jmp loop
