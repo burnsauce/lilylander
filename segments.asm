@@ -2,11 +2,21 @@
 .segmentdef Code [start=$810]
 .segmentdef Data [startAfter="Code"]
 .segmentdef Graphics1 [start=$4000]
-.segmentdef CopyCode [startAfter="Graphics1"]
+.segmentdef CopyCode [startAfter="Graphics1", virtual]
 .segmentdef Graphics2 [start=$C000]
 .segmentdef Buffer [startAfter="Data", align=$100]
 .segmentdef InitCode [startAfter="Data", modify="BasicUpstart", _start=init, align=$100]
+
 #import "disk.asm"
+
+.segment CopyCode "doColorRamCopy"
+.label doColorRamCopy = *
+	.break
+	.fill 6001, 0
+.segment CopyCode "doBufferRamCopy"
+.label doBufferRamCopy = *
+	.break
+	.fill 6001, 0
 
 .segment Buffer
 .label	rmb = *

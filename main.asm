@@ -8,39 +8,21 @@
 
 .segment Code
 #import "common.asm"
+#import "zeropage.asm"
+#import "unroll.asm"
 #import "dblbuf.asm"
-#import "bg.asm"
-#import "sid.asm"
 #import "sprlib.asm"
+#import "sid.asm"
+#import "rle.asm"
+#import "bgdata.asm"
 #import "game.asm"
 #import "frame.asm"
-#import "ramcpy.asm"
-
-.segment InitCode
-.const kcls = $ff81
-init:	sei
-	// disable timer
-	lda #$7f
-	sta $dc0d
-	// disable raster IRQ
-	lda #0
-	sta $d01a
-	// blank the frame
-	lda #1 << 4
-	ora $d011
-	sta $d011
-	// disable BASIC and KERNAL
-	lda #$35
-	sta $01
-	
-	initDblBuf()
-	initSID()
-	initFrame()
-	jmp ready 
+#import "init.asm"
 
 .segment Code "Main Loop"
-ready:	copySprites()
-	copyDblRam()
+ready:	copyDblRam()
+
+	//jsr doBufferRamCopy
 	lda #$80
 loop:	bit scrolling
 	beq loop
@@ -49,6 +31,7 @@ scrl:	lda xscroll
 	bne scrl
 	copyDblMatrix()
 	copyDblBitmap()
+	//jsr doBufferRamCopy
 	copyDblRam()
 	lda #$80
 	bit scrolling

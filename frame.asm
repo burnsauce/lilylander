@@ -1,27 +1,13 @@
 .segment Code 
-.label frdiv = reserve(1)
-.label frspd = reserve(1)
 
 .const PRA	 = $dc00
 .const DDRA	 = $dc02
 .const PRB	 = $dc01
 .const DDRB	 = $dc03
-.const frameRaster = 251
-.const preFrameRaster = 130
-.const landingMargin = 24
 
-.label aniptr = reserve()
-.label cfreq = reserve()
-.label phase = reserve(1)
-.label phcount = reserve(1)
-.label jumping = reserve(1)
-.label keyheld = reserve(1)
-.label seconds = reserve(1)  
-.label secondsc = reserve(1)  
-.label level = reserve(1)
-.label xscroll = reserve(1)
-.label scrolling = reserve()
-.label nextFrameISR = reserve()
+.const frameRaster = 251
+.const preFrameRaster = 60
+.const landingMargin = 24
 
 .macro scankey(col) {
 	lda #((1 << col) ^ $ff)
@@ -32,81 +18,13 @@
 
 .macro startFrame(delay) {
 	startISR()
+	switchToPreframe()
+	asl $d019
+	cli
 	delay(delay)
-	.break
 	mov #3 : $d021
 	moveLily() 
 }
-
-.macro animate() {
-	jmp (aniptr)
-}
-
-.macro initFrame() {
-	mov #12 : frdiv
-	sta phcount
-	lda #0
-	sta phase
-	sta jumping
-	sta keyheld
-	sta powerLevel
-	sta seconds
-	sta scrolling
-	lda #1
-	sta level
-
-	// preset full right scroll
-	lda #$f
-	sta xscroll
-	lda #7
-	ora XSCROL
-	sta XSCROL
-
-	// clear raster hi bit
-	// turn off the display
-	lda #$6f
-	and $d011
-	sta $d011
-	lda #frameRaster
-	sta $d012
-
-	initBackground()
-	initFrog()
-	initLily()
-	loadLevel(level)
-	mov16 #finishFrame : aniptr
-	setInterrupt(frameISR)
-
-	// wait for high raster
-!:	lda $d011
-	bpl !-
-	ora #1 << 4
-	and #$7f
-	sta $d011
-
-	// enable interrupt
-	lda #1
-	sta $d01a
-	cli
-}
-
-.macro delay(n) {
-	.for(var i=floor(n/2); i> 0; i--) {
-		nop
-	}
-}
-
-.align $100
-*=* "preFrameISR"
-preFrameISR:
-	startISR()
-	delay(28)
-	mov #6 : $d021
-	mov16 nextFrameISR : $fffe
-	lda #frameRaster
-	sta $d012
-	asl $d019
-	finishISR()
 
 .macro switchToPreframe() {
 	mov16 $fffe : nextFrameISR
@@ -115,7 +33,16 @@ preFrameISR:
 	sta $d012
 }
 
-.label ftmp = reserve(1)
+.macro animate() {
+	jmp (aniptr)
+}
+
+.macro delay(n) {
+	.for(var i=floor(n/2); i> 0; i--) {
+		nop
+	}
+}
+
 .align $100
 *=* "finishFrame"
 finishFrame:
@@ -141,21 +68,26 @@ finishFrame:
 	ora ftmp
 	sta $d016
 	lda xscroll
-	//cmp #0
-	beq !+
-	jmp fsw
-!:	//switchToPreframe()
-	switchBank()
-	jmp fdone
 fsw:	cmp #$f
 	beq !+
 	jmp fdone
-!:	doSwitchBank()
-	//copyDblToRam()
-	jsr copyColorRam
-fdone:	asl $d019
-	switchToPreframe()
+!:	switchBank()
+	doSwitchBank()
+	jsr doColorRamCopy
+fdone:	
 	finishISR()
+
+*=* "preFrameISR"
+preFrameISR:
+	pha
+	.break
+	delay(28)
+	mov #6 : $d021
+	mov16 nextFrameISR : $fffe
+	lda #frameRaster
+	sta $d012
+	asl $d019
+	pla; rti
 
 *=* "Animation Handlers"
 
@@ -319,7 +251,7 @@ ph0:	lda #0
 gotabs:	cmp #landingMargin
 	bpl miss
 	jmp hit
-miss:	setInterrupt(missed)
+miss:	mov16 #missed : nextFrameISR
 	mov #0 : seconds
 	mov #15 : secondsc
 	SIDfreq(1, $0F00)
@@ -330,13 +262,14 @@ hit:	mov16 #finishFrame : aniptr
 	loadSprite(blank, 0)
 	loadSprite(blank, 1)
 	loadSprite(blank, 2)
-	setInterrupt(landed)
+	mov16 #landed : nextFrameISR
 	mov #0 : seconds
 	mov #15 : secondsc
 	SIDfreq(1, $0F00)
 	SIDgate(1, 1)
 	jmp finishFrame
 
+* = * "Missed Handler"
 missed:	startFrame(28)
 	dec secondsc
 	bne mlks
@@ -398,9 +331,10 @@ mcomplete: lda #0
 	sta keyheld
 	initFrog()
 	mov16 #finishFrame : aniptr
-	setInterrupt(frameISR)
+	mov16 #frameISR : nextFrameISR
 	jmp finishFrame
 
+* = * "landed Handler"
 landed:	startFrame(28)
 	dec secondsc
 	bne lks
@@ -450,11 +384,11 @@ continue: lda #1
 	sta keyheld
 	jmp finishFrame
 complete: 
+	mov16 #frameISR : nextFrameISR
 	inc level
 	loadLevel(level)
 	lda #0
 	sta keyheld
 	SIDgate(1, 0)
 	initFrog()
-	setInterrupt(frameISR)
 	jmp finishFrame

@@ -7,9 +7,7 @@
 .const sprxhi   = $d010
 .const sprxpos  = $d000
 .const sprypos  = $d001
-.label sprbase = $4000
-//.var sprpos = reserve(16)
-.label lsarg = reserve(2)
+.var   sprbase  = $4000
 
 .macro setSpriteMC(mc1, mc2) {
 	lda #mc1

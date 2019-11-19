@@ -46,6 +46,15 @@
 !:	dec a
 }
 
+.pseudocommand cmp16 a : b {
+	lda a
+	cmp b
+	bne !+
+	lda _16bitNext(a)
+	cmp _16bitNext(b)
+!:
+}
+
 .function reserve(bytes) {
 	.var ret = nextVar
 		.if (nextVar == $100) {
@@ -77,78 +86,14 @@
 	sta machine_irq + 1
 }
 	
-.macro copyInterruptO(vector, offset) {
-	lda offset
-	asl
-	tay
-	lda vector, y
-	sta machine_irq
-	lda vector + 1, y
-	sta machine_irq + 1
-}
-
-.macro copyInterrupt(vector) {
-	lda vector
-	sta machine_irq
-	lda vector + 1
-	sta machine_irq + 1
-}
-
-.macro copyPage(from, to) {
-	ldx #0
-!:	lda from, x
-	sta to, x
-	inx
-	bne !-
-}
 .macro startISR() {
-	php; pha; txa; pha; tya; pha
+	pha; txa; pha; tya; pha
 }
+
 .macro finishISR() {
-	pla; tay; pla; tax; pla; plp; rti
+	pla; tay; pla; tax; pla; rti
 }
 /*
-	$1001, $2000, $fff
-	256 - 1 = 255 bytes from first page
-*/
-.macro copyMem(from, to, size) {
-	.if(size < $100) {
-		ldx #0
-!:		lda from, x
-		sta to, x
-		inx
-		cpx #size
-		bne !-
-	} else {
-		.var bytes_left = size
-		// copy as many pages as possible
-		.var page = 0
-		.while(bytes_left >= $100) {
-			.eval bytes_left -= $100
-			copyPage(from + page, to + page)
-			.eval page += $100
-		}
-		// copy the remainder
-		.if (bytes_left > 0) {
-			ldx #0
-!:			lda from + page, x
-			sta to + page, x
-			inx
-			cpx #bytes_left
-			bne !-
-		}
-	}
-}
-
-.pseudocommand cmp16 a : b {
-	lda a
-	cmp b
-	bne !+
-	lda _16bitNext(a)
-	cmp _16bitNext(b)
-!:
-}
-
 .label mcrptr = reserve()
 .label mcwptr = reserve()
 .label mcompr = reserve()
@@ -165,7 +110,7 @@
 	cmp16 mcrptr : mcompr
 	bne !-
 }
-
+*/
 .macro fastMemCopy(from, to, size) {
 	pha
 	tya

@@ -1,5 +1,4 @@
 .segment Code 
-.label vicBank = reserve(1)
 
 .macro switchBank() {
 	lda vicBank
@@ -12,21 +11,10 @@
 	sta $dd00
 }
 
-
-.macro initDblBuf() {
-	lda $dd00
-	and #$fc
-	ora #2
-	sta $dd00
-	mov #2 : vicBank
-}
 .macro copySprites() {
 	fastMemCopy(sprbank1, sprbank2, sprsize)
 }
 
-.label dblr = reserve()
-.label dblw = reserve()
-.label dblt = reserve(1)
 .macro copyDblBitmap() {
 	lda vicBank
 	beq !+
@@ -73,8 +61,8 @@ decrle:	ldy #0
 	bne !- 
 }
 
-.macro copyDblRam() {
-	fastMemCopy($d800 + 1, rmb, $3e8 - 1)
+unpackRamColumn:
+	//fastMemCopy($d800 + 1, rmb, $3e8 - 1)
 	// Unpack RLE Column
 	mov16 #rmb + 39 : wrV
 	ldy #0
@@ -85,10 +73,9 @@ decrle:	ldy #0
 	add16 wrV : #40 : wrV
 	dex
 	bne !-
+	rts
+
+.macro copyDblRam() {
+	jsr doBufferRamCopy
+	jsr unpackRamColumn
 }
-
-.macro copyDblToRam() {
-	fastMemCopy(rmb, $d800, $3e8)
-}
-
-

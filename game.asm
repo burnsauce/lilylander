@@ -1,5 +1,3 @@
-.label powerLevel = reserve(1)
-.label lilypos = reserve(1)
 .const lilyoffset  = 319 - 256
 
 .macro jmpsound() {
