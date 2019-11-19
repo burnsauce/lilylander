@@ -8,13 +8,13 @@
 
 .segment Code
 #import "common.asm"
-#import "multiply.asm"
 #import "dblbuf.asm"
 #import "bg.asm"
 #import "sid.asm"
 #import "sprlib.asm"
 #import "game.asm"
 #import "frame.asm"
+#import "ramcpy.asm"
 
 .segment InitCode
 .const kcls = $ff81

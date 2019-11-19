@@ -6,3 +6,5 @@ run:
 	java -jar KickAss.jar -cfgfile run.cfg main.asm
 debug:
 	java -jar KickAss.jar -cfgfile debug.cfg main.asm
+unroll:
+	java -jar KickAss.jar -cfgfile unroll.cfg unroll.asm

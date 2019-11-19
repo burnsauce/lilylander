@@ -39,71 +39,67 @@
 
 	// prepare bitmap decode
 	mov16 #bmbase : wrV2
+	mov16 wrV2 : wrV
 	lda #40
 	sta column
-	lda #8
-	sta colbyte
-col:	mov16 wrV2 : wrV
-	mla320(row, wrV)
+	ldy #0
+	ldx #25
 block:	rleNextByte(bitmap, breadV, brunCount, brunByte)
 	lda brunByte
 	sta (wrV),y
-	inc16 wrV
-	dec colbyte
+	iny
+	cpy #8
 	bne block
-	lda #8
-	sta colbyte
-	inc row
-	lda row
-	cmp #25
+	add16 wrV : #320 : wrV
+	ldy #0
+	dex
 	beq !+
-	jmp col
-!:	sty row
+	jmp block
+!:	ldx #25
 	add16 wrV2 : #8 : wrV2
+	mov16 wrV2 : wrV
 	dec column
 	beq !+
-	jmp col
+	jmp block
 !:
 	// prepare matrix decode
 	mov16 #mbase : wrV2
 	lda #40
 	sta column
 	ldy #0
-	sty row
-col2:	mov16 wrV2 : wrV
-	mla40(row, wrV)
-	rleNextByte(matrix, mreadV, mrunCount, mrunByte)
+	ldx #25
+	mov16 wrV2 : wrV
+col2:	rleNextByte(matrix, mreadV, mrunCount, mrunByte)
 	lda mrunByte
 	sta (wrV),y
-	inc row
-	lda row
-	cmp #25
+	add16 wrV : #40 : wrV
+	dex
 	beq !+
 	jmp col2
-!:	sty row
+!:	ldx #25
 	inc16 wrV2
+	mov16 wrV2 : wrV
 	dec column
 	beq !+
 	jmp col2
 
 	// prepare color ram decode
 !:	mov16 #rbase : wrV2
+	mov16 wrV2 : wrV
 	lda #40
 	sta column
 	ldy #0
-	sty row
-col3:	mov16 wrV2 : wrV
-	mla40(row, wrV)
-	rleNextByte(colorram, rreadV, rrunCount, rrunByte)
+	ldx #25
+col3:	rleNextByte(colorram, rreadV, rrunCount, rrunByte)
 	lda rrunByte
 	sta (wrV),y
-	inc row
-	lda row
-	cmp #25
+	add16 wrV : #40 : wrV
+	dex
 	beq !+
 	jmp col3
-!:	sty row
+!:	ldx #25
 	inc16 wrV2
+	mov16 wrV2 : wrV
 	dec column
 	beq !+
 	jmp col3

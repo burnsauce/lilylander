@@ -7,7 +7,7 @@
 .const PRB	 = $dc01
 .const DDRB	 = $dc03
 .const frameRaster = 251
-.const preFrameRaster = 25
+.const preFrameRaster = 130
 .const landingMargin = 24
 
 .label aniptr = reserve()
@@ -20,14 +20,22 @@
 .label secondsc = reserve(1)  
 .label level = reserve(1)
 .label xscroll = reserve(1)
-.label scrolling = reserve(1)
-.label nextFrameISR = reserve(2)
+.label scrolling = reserve()
+.label nextFrameISR = reserve()
 
 .macro scankey(col) {
 	lda #((1 << col) ^ $ff)
 	sta PRA
 	lda PRB
 	cmp #$ff
+}
+
+.macro startFrame(delay) {
+	startISR()
+	delay(delay)
+	.break
+	mov #3 : $d021
+	moveLily() 
 }
 
 .macro animate() {
@@ -46,20 +54,19 @@
 	sta scrolling
 	lda #1
 	sta level
-	lda #$f
-	sta xscroll
 
 	// preset full right scroll
+	lda #$f
+	sta xscroll
 	lda #7
 	ora XSCROL
 	sta XSCROL
 
-	// set interrupt vector
-	lda #$7f
-	and $d011
+	// clear raster hi bit
 	// turn off the display
-	//ora #1 << 4
-	//sta $d011
+	lda #$6f
+	and $d011
+	sta $d011
 	lda #frameRaster
 	sta $d012
 
@@ -73,6 +80,9 @@
 	// wait for high raster
 !:	lda $d011
 	bpl !-
+	ora #1 << 4
+	and #$7f
+	sta $d011
 
 	// enable interrupt
 	lda #1
@@ -80,11 +90,18 @@
 	cli
 }
 
-*=* "preFrameISR"
+.macro delay(n) {
+	.for(var i=floor(n/2); i> 0; i--) {
+		nop
+	}
+}
+
 .align $100
+*=* "preFrameISR"
 preFrameISR:
 	startISR()
-	copyDblToRam()
+	delay(28)
+	mov #6 : $d021
 	mov16 nextFrameISR : $fffe
 	lda #frameRaster
 	sta $d012
@@ -134,8 +151,10 @@ fsw:	cmp #$f
 	beq !+
 	jmp fdone
 !:	doSwitchBank()
-	copyDblToRam()
+	//copyDblToRam()
+	jsr copyColorRam
 fdone:	asl $d019
+	switchToPreframe()
 	finishISR()
 
 *=* "Animation Handlers"
@@ -168,8 +187,7 @@ ph3ani:	pushFrogRight(frspd)
 .align $100
 *=* "frameISR"
 frameISR:
-	startISR()
-	moveLily()
+	startFrame(28)
 	lda keyheld
 	beq !+
 	jmp !++
@@ -180,11 +198,11 @@ frameISR:
 	sta DDRA
 	lda #0
 	sta DDRB
-	scankey(0)
-	//scankey(7)
+	//scankey(0)
+	scankey(7)
 	beq !+
 	jmp holding
-!:	scankey(1)
+/*!:	scankey(1)
 	beq !+
 	jmp holding
 !:	scankey(2)
@@ -205,6 +223,7 @@ frameISR:
 !:	scankey(7)
 	beq !+
 	jmp holding
+*/
 !:	lda keyheld
 	bne jumpnow
 	animate()
@@ -318,8 +337,7 @@ hit:	mov16 #finishFrame : aniptr
 	SIDgate(1, 1)
 	jmp finishFrame
 
-missed:	startISR()
-	moveLily()
+missed:	startFrame(28)
 	dec secondsc
 	bne mlks
 	mov #15 : secondsc
@@ -334,9 +352,10 @@ mlks:	lda #$ff
 	sta DDRA
 	lda #0
 	sta DDRB
-	scankey(0)
+	scankey(7)
 	beq !+
 	jmp mcont
+/*
 !:	scankey(1)
 	beq !+
 	jmp mcont
@@ -358,6 +377,7 @@ mlks:	lda #$ff
 !:	scankey(7)
 	beq !+
 	jmp mcont
+*/
 !:	lda keyheld
 	beq !+
 	jmp mcomplete
@@ -381,7 +401,7 @@ mcomplete: lda #0
 	setInterrupt(frameISR)
 	jmp finishFrame
 
-landed:	startISR()
+landed:	startFrame(28)
 	dec secondsc
 	bne lks
 	mov #15 : secondsc
@@ -396,9 +416,10 @@ lks:	lda #$ff
 	sta DDRA
 	lda #0
 	sta DDRB
-	scankey(0)
+	scankey(7)
 	beq !+
 	jmp continue
+/*
 !:	scankey(1)
 	beq !+
 	jmp continue
@@ -420,6 +441,7 @@ lks:	lda #$ff
 !:	scankey(7)
 	beq !+
 	jmp continue
+*/
 !:	lda keyheld
 	beq !+
 	jmp complete
