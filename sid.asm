@@ -2,11 +2,13 @@
 .const SIDwidth = 7
 
 .macro SIDvol(vol) {
+SIDvol:
 	lda #vol
 	sta SIDbase + $18
 }
 
 .macro SIDfreq(chan, freq) {
+SIDfreq:
 	lda #<freq
 	sta SIDbase + (SIDwidth * (chan - 1))
 	lda #>freq
@@ -14,6 +16,7 @@
 }
 
 .macro SIDfreqd(chan, freqr) {
+SIDfreqd:
 	lda freqr
 	sta SIDbase + (SIDwidth * (chan - 1))
 	lda freqr + 1
@@ -21,6 +24,7 @@
 }
 
 .macro SIDpw(chan, pw) {
+SIDpw:
 	lda #<pw
 	sta SIDbase + (SIDwidth * (chan - 1)) + 2
 	lda #(>pw >> 4)
@@ -28,6 +32,7 @@
 }
 
 .macro SIDadsr(chan, a, d, s, r) {
+SIDadsr:
 	lda #((a << 4) | d)
 	sta SIDbase + (SIDwidth * (chan - 1)) + 5
 	lda #((s << 4) | r)
@@ -35,6 +40,7 @@
 }
 
 .macro SIDgate(chan, gate) {
+SIDgate:
 	.if (gate > 0) {
 		lda #1 // bit 0
 		ora SIDctrl + (chan - 1)
@@ -49,6 +55,7 @@
 }
 
 .macro SIDsync(chan, sync) {
+SIDsync:
 	.if (sync > 0) {
 		lda #2 // bit 1
 		ora SIDctrl + (chan - 1)
@@ -63,6 +70,7 @@
 }
 
 .macro SIDring(chan, ring) {
+SIDring:
 	.if (ring > 0) {
 		lda #4 // bit 1
 		ora SIDctrl + (chan - 1)
@@ -77,6 +85,7 @@
 }
 
 .macro SIDtri(chan) {
+SIDtri:
 	lda #$0f
 	and SIDctrl + (chan - 1)
 	ora #$10
@@ -85,6 +94,7 @@
 }
 
 .macro SIDsaw(chan) {
+SIDsaw:
 	lda #$0f
 	and SIDctrl + (chan - 1)
 	ora #$20
@@ -93,6 +103,7 @@
 }
 
 .macro SIDpulse(chan) {
+SIDpulse:
 	lda #$0f
 	and SIDctrl + (chan - 1)
 	ora #$40
@@ -101,6 +112,7 @@
 }
 
 .macro SIDnoise(chan) {
+SIDnoise:
 	lda #$0f
 	and SIDctrl + (chan - 1)
 	ora #$80

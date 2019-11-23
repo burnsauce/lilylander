@@ -1,21 +1,25 @@
 .segment Code 
 
 .macro switchBank() {
+switchBank:
 	lda vicBank
 	eor #2
 	sta vicBank
 }
 .macro doSwitchBank() {
+doSwitchBank:
 	lda $dd00
 	eor #2
 	sta $dd00
 }
 
 .macro copySprites() {
+copySprites:
 	fastMemCopy(sprbank1, sprbank2, sprsize)
 }
 
 .macro copyDblBitmap() {
+copyDblBitmap:
 	lda vicBank
 	beq !+
 	jmp other
@@ -41,6 +45,7 @@ block2:	rleNextByte(bitmap, breadV, brunCount, brunByte)
 }
 
 .macro copyDblMatrix() {
+copyDblMatrix:
 	lda vicBank
 	beq !+
 	jmp other
@@ -76,6 +81,7 @@ unpackRamColumn:
 	rts
 
 .macro copyDblRam() {
-	jsr doBufferRamCopy
+copyDblRam:
+	fastMemCopy($d801, rmb, 998)
 	jsr unpackRamColumn
 }

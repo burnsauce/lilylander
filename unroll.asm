@@ -1,4 +1,5 @@
 .pseudocommand unrollMemCopy from:to:size:codeAddr {
+unrollMemCopy:
 	mov16 from : unrAddr
 	mov16 to : unwAddr
 	mov16 codeAddr : uncAddr

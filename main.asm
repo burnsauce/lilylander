@@ -8,33 +8,26 @@
 
 .segment Code
 #import "common.asm"
+#import "multiply.asm"
 #import "zeropage.asm"
 #import "unroll.asm"
 #import "dblbuf.asm"
-#import "sprlib.asm"
+//#import "sprlib.asm"
 #import "sid.asm"
 #import "rle.asm"
 #import "bgdata.asm"
-#import "game.asm"
+#import "sprmux.asm"
 #import "frame.asm"
 #import "init.asm"
+#import "game.asm"
 
 .segment Code "Main Loop"
-ready:	copyDblRam()
-
-	//jsr doBufferRamCopy
-	lda #$80
-loop:	bit scrolling
-	beq loop
-scrl:	lda xscroll
-	cmp #$e
-	bne scrl
-	copyDblMatrix()
-	copyDblBitmap()
-	//jsr doBufferRamCopy
+ready:	
 	copyDblRam()
-	lda #$80
-	bit scrolling
-	beq !+
-	jmp scrl
-!:	jmp loop
+	//jsr doBufferRamCopy
+loop:	lda frame_count
+	beq loop
+	jsr updateGame
+wait:	lda frame_count
+	bne wait
+	jmp loop

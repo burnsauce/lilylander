@@ -1,4 +1,5 @@
 #if !SPRITES_LOADED
+/*
 .var wix1 = mod(*, $4000) / 64
 #endif
 .byte  $00,$00,$00,$00,$00,$00,$00,$00
@@ -42,6 +43,7 @@
 .byte  $a7,$00,$95,$ad,$00,$05,$a9,$40
 .byte  $01,$6b,$50,$00,$5b,$d0,$00,$16
 .byte  $f4,$00,$05,$bc,$00,$00,$00,$87 // spr wix4
+*/
 #if !SPRITES_LOADED
 .var frog2 = mod(*, $4000) / 64
 #endif

@@ -1,56 +1,57 @@
-.file [name="ll.prg", segments="Code,Data,CopyCode,Graphics1,InitCode"]
+.file [name="ll.prg", segments="Code,Data,InitCode,FieldData,Graphics1,CopyCode"]
+
 .segmentdef Code [start=$810]
 .segmentdef Data [startAfter="Code"]
-.segmentdef Graphics1 [start=$4000]
-.segmentdef CopyCode [startAfter="Graphics1", virtual]
-.segmentdef Graphics2 [start=$C000]
-.segmentdef Buffer [startAfter="Data", align=$100]
-.segmentdef InitCode [startAfter="Data", modify="BasicUpstart", _start=init, align=$100]
+
+.segmentdef InitCode [start=$5000, modify="BasicUpstart", _start=init, align=$100]
+.segment Buffer [start=$5000, align=$100, virtual] "Color Ram Buffer"
+rmb:
+	.fill $3f8,0
 
 #import "disk.asm"
 
-.segment CopyCode "doColorRamCopy"
-.label doColorRamCopy = *
-	.break
-	.fill 6001, 0
-.segment CopyCode "doBufferRamCopy"
-.label doBufferRamCopy = *
-	.break
+.segment BucketEmpty1 [start=$4c4c, virtual]
+.fill 21, 0
+.segment BucketEmpty2 [start=$4cc8, virtual]
+.fill 21, 0
+.segment BucketEmpty3 [start=$c84c, virtual]
+.fill 21, 0
+.segment BucketEmpty4 [start=$c8c8, virtual]
+.fill 21, 0
+
+.segment CopyCode [startAfter="Graphics1", virtual] "doColorRamCopy"
+doColorRamCopy:
 	.fill 6001, 0
 
-.segment Buffer
-.label	rmb = *
-* = rmb "Color Ram Buffer" virtual
-	.fill $3f8,0
 
-.segment Graphics1
-.label 	smb1 = $4000
-* = smb1 "Screen Matrix Buffer 1" virtual
-	.fill $3f8, 0
-.label sprp1 = *
+.segment Graphics1 [start=$4000]
+* = * "Screen Matrix Buffer 1" virtual
+smb1:
+	.fill $400, 0
+.label sprp1 = * - 8
 
 .align $40
-.label sprbank1 = *
-* = * "Sprites"
+sprbank1:
+.segment Graphics1 "Sprites"
 #import "sprites.asm"
-.label sprsize = * - sprbank1
+.var sprsize = * - sprbank1
 
-.label 	bmb1 = $6000
-* = bmb1 "Bitmap Buffer 1" virtual
+* = $6000 "Bitmap Buffer 1" virtual
+bmb1:
 	.fill $1f40, 0
 
 
-.segment Graphics2
-.label 	smb2 = $c000
-* = smb2 "Screen Matrix Buffer 2" virtual
-	.fill $3f8, 0
-.label sprp2 = *
+.segment Graphics2 [start=$C000, virtual] "Screen Matrix Buffer 2"
+
+smb2:
+	.fill $400, 0
+.label sprp2 = * - 8
 
 .align $40
-.label sprbank2 = *
 * = * "Bank 2 Sprites" virtual
+sprbank2:
 	.fill sprsize, 0
 
-.label 	bmb2 = $e000
-*= 	bmb2 "Bitmap Buffer 2" virtual
+* = $e000 "Bitmap Buffer 2" virtual
+bmb2:
 	.fill $1f40, 0

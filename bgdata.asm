@@ -1,3 +1,4 @@
+.segment Data "RLE Data"
 bgcolor:	.byte 3
 *=* "RLE Bitmap"
 bitmap:

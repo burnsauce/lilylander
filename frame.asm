@@ -1,56 +1,84 @@
 .segment Code 
+#import "raster.asm"
 
-.const PRA	 = $dc00
-.const DDRA	 = $dc02
-.const PRB	 = $dc01
-.const DDRB	 = $dc03
+.label framet = reserve(0)
+.label d016_cache = reserve(1,0)
+.label interp = reserve(1,0)
+.label frame_ready = reserve(1,0)
+.macro initFrame() {
+initFrame:
 
-.const frameRaster = 251
-.const preFrameRaster = 60
-.const landingMargin = 24
+	// clear raster hi bit
+	// turn off the display
+	// half V scroll
+	lda #%00110111
+	sta $d011
 
-.macro scankey(col) {
-	lda #((1 << col) ^ $ff)
-	sta PRA
-	lda PRB
-	cmp #$ff
+
+	// multicolor
+	// 40 col
+	// full H scroll
+	lda #%00010111
+	sta $d016
+
+	// bits 4-7 are for matrix offset
+	// bits 1-3 are for bitmap
+	lda #%00001000
+	sta $d018
+
+	rleUnpackImage(bmb1, smb1, $d800)
 }
 
-.macro startFrame(delay) {
-	startISR()
-	switchToPreframe()
-	asl $d019
+*=* "frameISR"
+frameISR:
+	setNextISR(topISR, TOP_ISR)
+	mov $d016 : d016_cache
 	cli
-	delay(delay)
-	mov #3 : $d021
-	moveLily() 
-}
+	lda frame_ready
+	beq !+
+	jmp fskip
+!:	jsr scheduleActors
+	// handle frame update
+	// interpolate sprite movement
+	ldy #0
+	lda frame_count
+	beq frame0
+	jmp frame1
+frame0:	sub16 newxy,y : oldxy,y : framet
+	lda framet
+	lsr framet
+	sta framet
+	add16 oldxy,y : framet : curxy,y
+	iny
+	iny
+	sec
+	lda newxy,y
+	sbc oldxy,y
+	lsr
+	clc
+	adc oldxy,y
+	sta curxy,y
+	iny
+	cpy #ACTORS * 3
+	beq scroll
+	jmp frame0
 
-.macro switchToPreframe() {
-	mov16 $fffe : nextFrameISR
-	setInterrupt(preFrameISR)
-	lda #preFrameRaster
-	sta $d012
-}
+frame1:	mov16 newxy,y : curxy,y
+	iny
+	iny
+	mov newxy,y : curxy,y
+	iny
+	cpy #ACTORS * 3
+	bne frame1
 
-.macro animate() {
-	jmp (aniptr)
-}
-
-.macro delay(n) {
-	.for(var i=floor(n/2); i> 0; i--) {
-		nop
-	}
-}
-
-.align $100
-*=* "finishFrame"
-finishFrame:
+scroll:	// handle scrolling
 	lda #80
 	bit scrolling
 	bne !+
 	jmp fdone
-!:	dec scrolling
+!:	
+	.break
+	dec scrolling
 	lda scrolling
 	and #$7f
 	bne !+
@@ -61,334 +89,24 @@ finishFrame:
 	and xscroll
 	sta xscroll
 	lda #$f8
-	and $d016
-	sta ftmp
+	and d016_cache
+	sta d016_cache 
 	lda xscroll
 	lsr
-	ora ftmp
-	sta $d016
+	ora d016_cache
+	sta d016_cache
 	lda xscroll
-fsw:	cmp #$f
 	beq !+
+	jmp flast	
+!:	copyDblMatrix()
+	copyDblBitmap()
 	jmp fdone
-!:	switchBank()
-	doSwitchBank()
+flast:	cmp #$f
+	bne fdone
 	jsr doColorRamCopy
-fdone:	
-	finishISR()
+fdone:	lda #1
+	eor frame_count
+	sta frame_count
+	inc frame_ready
+fskip:	pla; tay; pla; tax; pla; rti
 
-*=* "preFrameISR"
-preFrameISR:
-	pha
-	.break
-	delay(28)
-	mov #6 : $d021
-	mov16 nextFrameISR : $fffe
-	lda #frameRaster
-	sta $d012
-	asl $d019
-	pla; rti
-
-*=* "Animation Handlers"
-
-ph1ani:	pushFrogRight(frspd)
-	pushFrogUp(3)
-	lda #$02
-	adc cfreq + 1
-	sta cfreq + 1
-	SIDfreqd(1, cfreq)
-	jmp finishFrame
-
-ph2ani:	pushFrogRight(frspd)
-	lda frdiv
-	lsr
-	sec
-	sbc phcount
-	bcs frogdown
-	pushFrogUp(2)
-	jmp ph2ani1
-frogdown:
-	pushFrogDown(2)
-ph2ani1:
-	jmp finishFrame
-
-ph3ani:	pushFrogRight(frspd)
-	pushFrogDown(3)
-	jmp finishFrame
-
-.align $100
-*=* "frameISR"
-frameISR:
-	startFrame(28)
-	lda keyheld
-	beq !+
-	jmp !++
-!:	lda jumping
-	beq !+
-	jmp skipkey
-!:	lda #$ff
-	sta DDRA
-	lda #0
-	sta DDRB
-	//scankey(0)
-	scankey(7)
-	beq !+
-	jmp holding
-/*!:	scankey(1)
-	beq !+
-	jmp holding
-!:	scankey(2)
-	beq !+
-	jmp holding
-!:	scankey(3)
-	beq !+
-	jmp holding
-!:	scankey(4)
-	beq !+
-	jmp holding
-!:	scankey(5)
-	beq !+
-	jmp holding
-!:	scankey(6)
-	beq !+
-	jmp holding
-!:	scankey(7)
-	beq !+
-	jmp holding
-*/
-!:	lda keyheld
-	bne jumpnow
-	animate()
-jumpnow:
-	lda #1
-	sta jumping
-	sta phcount
-	lda powerLevel
-	lsr
-	lsr
-	lsr
-	lsr
-	clc
-	adc #2
-	sta frspd
-	lda #12
-	sta frdiv
-	lda #0
-	sta keyheld
-	lda #$ff
-	sta scrolling
-	jmp skipkey
-holding:
-	lda keyheld
-	bne !+
-	jmpsound()
-	lda #1
-	sta keyheld
-!:	lda powerLevel
-	cmp #80
-	bpl !+
-	updatePower()
-	lda #$F0
-	clc
-	adc cfreq
-	sta cfreq
-	bcc !+
-	inc cfreq + 1
-	SIDfreqd(1, cfreq)
-!:	animate()
-skipkey:
-	dec phcount
-	beq !+
-	animate()
-	// --------------- phase update ----------------
-!:	ldy frdiv
-	sty phcount
-	inc phase
-	lda phase
-	cmp #1
-	beq !+
-	jmp ph2
-!:	jmpsound()
-	loadSprite(frogj1, 0)
-	loadSprite(frogj2, 1)
-	loadSprite(frogj3, 2)
-	loadSprite(blank, 3)
-	mov16 #ph1ani : aniptr
-	animate()
-ph2:	cmp #2
-	beq !+
-	jmp ph3
-!:	jmpstop()
-	loadSprite(frogs1, 0)
-	loadSprite(frogs2, 1)
-	loadSprite(blank, 2)
-	loadSprite(blank, 3)
-	mov16 #ph2ani : aniptr
-	animate()
-ph3:	cmp #3
-	beq !+
-	jmp ph0
-!:	loadSprite(frogf1, 0)																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																											 
-	loadSprite(frogf2, 1)
-	loadSprite(frogf4, 3)
-	loadSprite(blank, 2)
-	mov16 #ph3ani : aniptr
-	animate()
-ph0:	lda #0
-	sta phase
-	sta jumping
-	sta keyheld
-	resetPower()
-	sec
-	lda $d006 // frog
-	sbc $d00e // lily
-	clc
-	adc #[landingMargin / 2]
-	bpl gotabs
-	eor #$ff
-	clc
-	adc #1
-gotabs:	cmp #landingMargin
-	bpl miss
-	jmp hit
-miss:	mov16 #missed : nextFrameISR
-	mov #0 : seconds
-	mov #15 : secondsc
-	SIDfreq(1, $0F00)
-	SIDgate(1, 1)
-	animate()
-hit:	mov16 #finishFrame : aniptr
-	loadSprite(frog2, 3)
-	loadSprite(blank, 0)
-	loadSprite(blank, 1)
-	loadSprite(blank, 2)
-	mov16 #landed : nextFrameISR
-	mov #0 : seconds
-	mov #15 : secondsc
-	SIDfreq(1, $0F00)
-	SIDgate(1, 1)
-	jmp finishFrame
-
-* = * "Missed Handler"
-missed:	startFrame(28)
-	dec secondsc
-	bne mlks
-	mov #15 : secondsc
-	inc seconds
-	lda seconds
-	cmp #1
-	beq lotone
-	SIDgate(1, 0)
-	jmp mlks
-lotone:	SIDfreq(1, $0780)
-mlks:	lda #$ff
-	sta DDRA
-	lda #0
-	sta DDRB
-	scankey(7)
-	beq !+
-	jmp mcont
-/*
-!:	scankey(1)
-	beq !+
-	jmp mcont
-!:	scankey(2)
-	beq !+
-	jmp mcont
-!:	scankey(3)
-	beq !+
-	jmp mcont
-!:	scankey(4)
-	beq !+
-	jmp mcont
-!:	scankey(5)
-	beq !+
-	jmp mcont
-!:	scankey(6)
-	beq !+
-	jmp mcont
-!:	scankey(7)
-	beq !+
-	jmp mcont
-*/
-!:	lda keyheld
-	beq !+
-	jmp mcomplete
-!:	lda seconds
-	cmp #2
-	bpl !+
-	animate()
-!:	mov #15 : secondsc
-	jmp finishFrame
-mcont:	lda #1
-	sta keyheld
-	lda seconds
-	cmp #2
-	bpl !+
-	animate()
-!:	jmp finishFrame
-mcomplete: lda #0
-	sta keyheld
-	initFrog()
-	mov16 #finishFrame : aniptr
-	mov16 #frameISR : nextFrameISR
-	jmp finishFrame
-
-* = * "landed Handler"
-landed:	startFrame(28)
-	dec secondsc
-	bne lks
-	mov #15 : secondsc
-	inc seconds
-	lda seconds
-	cmp #1
-	beq hitone
-	SIDgate(1, 0)
-	jmp lks
-hitone:	SIDfreq(1, $1E00)
-lks:	lda #$ff
-	sta DDRA
-	lda #0
-	sta DDRB
-	scankey(7)
-	beq !+
-	jmp continue
-/*
-!:	scankey(1)
-	beq !+
-	jmp continue
-!:	scankey(2)
-	beq !+
-	jmp continue
-!:	scankey(3)
-	beq !+
-	jmp continue
-!:	scankey(4)
-	beq !+
-	jmp continue
-!:	scankey(5)
-	beq !+
-	jmp continue
-!:	scankey(6)
-	beq !+
-	jmp continue
-!:	scankey(7)
-	beq !+
-	jmp continue
-*/
-!:	lda keyheld
-	beq !+
-	jmp complete
-!:	jmp finishFrame
-continue: lda #1
-	sta keyheld
-	jmp finishFrame
-complete: 
-	mov16 #frameISR : nextFrameISR
-	inc level
-	loadLevel(level)
-	lda #0
-	sta keyheld
-	SIDgate(1, 0)
-	initFrog()
-	jmp finishFrame

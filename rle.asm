@@ -1,4 +1,5 @@
 .macro rleNextByte(resetV, readV, runCount, runByte) {
+rleNextByte:
 	txa
 	pha
 	lda runCount
@@ -29,6 +30,7 @@ done:	pla
 }
 
 .macro rleUnpackImage(bmbase, mbase, rbase) {
+rleUnpackImage:
 	lda bgcolor
 	sta $d021
 	ldy #0

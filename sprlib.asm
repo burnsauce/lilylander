@@ -10,6 +10,7 @@
 .var   sprbase  = $4000
 
 .macro setSpriteMC(mc1, mc2) {
+setSpriteMC:
 	lda #mc1
 	sta sprmc1
 	lda #mc2
@@ -17,6 +18,7 @@
 }
 
 .macro loadSprite(location, num) {
+loadSprite:
 	lda #location
 	ldy #num
 	sta sprp1, y
@@ -34,25 +36,32 @@
 	sta sprcolor + num
 	enableSprite(num)
 }
+
+.label sprt = reserve(2,0)
+.label sprn = reserve(1,0)
         
 .macro enableSprite(num){
+enableSprite:
 	lda #(1 << num)
 	ora spren
 	sta spren
 }
         
 .macro disableSprite(num) {
+disableSprite:
 	lda #((1 << num) ^ $ff)
 	and spren
 	sta spren
 }
 
 .macro enableSprites() {
+enableSprites:
 	lda #$ff
 	sta spren
 }
 
 .macro moveSprite(num, x, y) {
+moveSprite:
 	.if (x > 255) {
 	// load the hi bit	
 		lda #(1 << num)
@@ -70,6 +79,7 @@
 }
 
 .macro pushFrogRight(amt) {
+pushFrogRight:
 	lda $d000
 	clc
 	adc amt
@@ -92,6 +102,7 @@ pfr2:
 }
 
 .macro pushFrogUp(amt) {
+pushFrogUp:
 	lda $d001
 	sec
 	sbc #amt
@@ -105,6 +116,7 @@ pfr2:
 }
 
 .macro pushFrogDown(amt) {
+pushFrogUp:
 	lda $d001
 	clc
 	adc #amt
