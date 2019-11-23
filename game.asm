@@ -46,6 +46,7 @@
 	loadActor(FROGF1, frogf1, 35, 170 - 21)
 	loadActor(FROGF2, frogf2, 35 + 24, 170 - 21)
 	loadActor(FROGF4, frogf4, 35 + 24, 170 - 21)
+	moveActorAbs #FROG3 : #50 : #180
 }
 
 .macro scankeys() {
@@ -91,7 +92,7 @@ movefrog:	updateFrog()
 	//checkLanded()
 	jmp keysdone
 restfrog:	showActor(FROG3)
-	moveActorAbs #FROG3 : #50 : #180
+	moveActor #FROG3 : #2 : #0
 keysdone:
 	// updateClouds()
 	// updateLilies()

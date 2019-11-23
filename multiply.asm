@@ -27,3 +27,10 @@ mla320:
 	pla
 	tay
 }
+
+.pseudocommand lerp320 start:end:delta:tar {
+lerp:
+	sub16 end : start : tar
+	mla320 tar : delta
+	add16 tar : start : tar
+}

@@ -8,11 +8,10 @@
 
 .segment Code
 #import "common.asm"
-#import "multiply.asm"
+//#import "multiply.asm"
 #import "zeropage.asm"
 #import "unroll.asm"
 #import "dblbuf.asm"
-//#import "sprlib.asm"
 #import "sid.asm"
 #import "rle.asm"
 #import "bgdata.asm"

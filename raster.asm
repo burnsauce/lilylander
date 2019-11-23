@@ -52,12 +52,14 @@ isrMUX:
 
 //	bit 6 - dirty(1) clean(0)
 //	bit 5 - bank 1(0) bank 2(1)
-auxISR:	mov #0 : sprites_loaded
+.macro loadSpriteBatch(nomoreh) {
+	mov #0 : sprites_loaded
 	mov #0 : xhi_cache
-nextsprite:	lda schedrp
+nextsprite:	
+	lda schedrp
 	cmp spriteSchedCount
 	bne !+
-	jmp nomore
+	jmp nomoreh
 !:	asl
 	tay
 	lda spriteschedule + 1,y
@@ -80,11 +82,16 @@ posdone:	inc next_sprite
 	lda schedrp
 	cmp spriteSchedCount
 	bne chkfull
-	jmp nomore
+	mov xhi_cache : $d010
+	jmp nomoreh
 chkfull:	inc sprites_loaded
 	lda sprites_loaded
 	cmp #8
 	bne nextsprite
+	mov xhi_cache : $d010
+}
+auxISR:	.break
+	loadSpriteBatch(nomore)
 	lda schedrp
 	asl
 	tay
@@ -94,9 +101,7 @@ chkfull:	inc sprites_loaded
 	sta $d012
 	jmp auxdone
 nomore:	setNextISR(botISR, BOT_ISR)
-auxdone:	mov xhi_cache : $d010
-	asl $d019
-	cli
+auxdone:	cli
 	jmp frameupdate
  
 topISR:
@@ -110,27 +115,25 @@ topISR:
 	lda #$80 // dirty
 	sta mode_flags
 	
-	// check if frame ready
 	lda frame_ready
 	bne !+
 	jmp frameupdate
 
-!:	.break
+!:	
 	lda #$20
 	ora mode_flags
 	sta mode_flags
 	dec frame_ready
 	mov #0 : schedrp
-	ldy #0
+	loadSpriteBatch(tnomore)
+	ldy schedrp
 	lda spriteschedule,y
 	tax
 	lda ypos,x
 	sta $d012
-
-	//setup bgcolor interrupts
-
-	switchBank()
-	cli
+	jmp tdone
+tnomore:	setNextISR(botISR, BOT_ISR)
+tdone:	cli
 	jmp frameupdate
 
 botISR:
@@ -145,7 +148,6 @@ botISR:
 
 	//advance music player
 
-	dec $d019
 	cli
 	jmp frameupdate
 
@@ -165,9 +167,8 @@ modechange: lda d011_cache
 	lda d016_cache
 	sta $d016
 	bvc d011done
-	lda bank_cache
-	eor $dd00
-	sta $dd00
+	switchBank()
+	doSwitchBank()
 d011done:
 	lda #0
 	sta mode_flags

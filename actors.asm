@@ -65,7 +65,16 @@ setSpriteMC:
 	sta oldxy,y
 	adc _16bitNext(dx)
 	sta newxy,y
-	iny
+	beq noover
+	lda newxy-1,y
+	cmp #60
+	bmi noover
+	lda #0
+	sta newxy-1,y
+	sta newxy,y
+	sta oldxy-1,y
+	sta oldxy,y
+noover:	iny
 	lda newxy,y
 	sta oldxy,y
 	clc
@@ -98,22 +107,6 @@ setSpriteMC:
 	sta $d027,y
 	pla
 	tay
-}
-
-.macro moveActor(id, dx, dy) {
-	ldy #id
-	lda newxy,y
-	sta oldxy,y
-	clc
-	adc #dx
-	sta newxy,y
-	iny
-	lda newxy,y
-	sta oldxy,y
-	clc
-	adc #dx
-	sta newxy,y
-	sta ypos-2,y
 }
 
 .pseudocommand moveActorAbs id : nx : ny {

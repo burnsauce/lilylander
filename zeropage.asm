@@ -61,8 +61,6 @@
 .label lilypos = reserve(1,100)
 // SID
 .label SIDctrl = reserve(3,0)
-// SprLib
-.label lsarg = reserve(2,0)
 // Unroll (temp)
 .label unrAddr = reserve(0)
 .label unwAddr = reserve(0)

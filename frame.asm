@@ -3,6 +3,7 @@
 
 .label framet = reserve(0)
 .label d016_cache = reserve(1,0)
+.label d016_cachec = reserve(1,0)
 .label interp = reserve(1,0)
 .label frame_ready = reserve(1,0)
 .macro initFrame() {
@@ -32,19 +33,20 @@ initFrame:
 *=* "frameISR"
 frameISR:
 	setNextISR(topISR, TOP_ISR)
-	mov $d016 : d016_cache
+	mov $d016 : d016_cachec
 	cli
 	lda frame_ready
 	beq !+
 	jmp fskip
-!:	jsr scheduleActors
+!:
 	// handle frame update
 	// interpolate sprite movement
 	ldy #0
 	lda frame_count
 	beq frame0
 	jmp frame1
-frame0:	sub16 newxy,y : oldxy,y : framet
+frame0:	jsr scheduleActors
+frame0l:    sub16 newxy,y : oldxy,y : framet
 	lda framet
 	lsr framet
 	sta framet
@@ -61,9 +63,9 @@ frame0:	sub16 newxy,y : oldxy,y : framet
 	iny
 	cpy #ACTORS * 3
 	beq scroll
-	jmp frame0
-
-frame1:	mov16 newxy,y : curxy,y
+	jmp frame0l
+frame1:
+	mov16 newxy,y : curxy,y
 	iny
 	iny
 	mov newxy,y : curxy,y
@@ -77,7 +79,6 @@ scroll:	// handle scrolling
 	bne !+
 	jmp fdone
 !:	
-	.break
 	dec scrolling
 	lda scrolling
 	and #$7f
@@ -89,22 +90,25 @@ scroll:	// handle scrolling
 	and xscroll
 	sta xscroll
 	lda #$f8
-	and d016_cache
-	sta d016_cache 
+	and d016_cachec
+	sta d016_cachec 
 	lda xscroll
 	lsr
-	ora d016_cache
-	sta d016_cache
+	ora d016_cachec
+	sta d016_cachec
 	lda xscroll
 	beq !+
-	jmp flast	
-!:	copyDblMatrix()
+	jmp flast
+!:	mov d016_cachec : d016_cache
+	copyDblMatrix()
 	copyDblBitmap()
+	copyDblRam()
 	jmp fdone
 flast:	cmp #$f
 	bne fdone
 	jsr doColorRamCopy
-fdone:	lda #1
+fdone:	mov d016_cachec : d016_cache
+	lda #1
 	eor frame_count
 	sta frame_count
 	inc frame_ready

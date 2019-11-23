@@ -94,6 +94,10 @@ initSprMux:
 // frame setup
 //.macro scheduleActors() {
 scheduleActors:
+	txa
+	pha
+	tya
+	pha
 	fillBuckets()
 sortActors:	tsx
 	stx sortBeginSp
@@ -118,13 +122,12 @@ dosched:
 	asl
 	tax
 	mov sortActor : spriteschedule,x
-	// need to do more here to prepare
-	// precache hi bit according to schedcount
 	lda curxy + 1,x
 	bne hibithi
 	sta spriteschedule + 1,x
 	jmp hibitdone
 hibithi:	// x is schedule index
+	.break
 	txa
 	pha
 	lda spriteSchedCount
@@ -150,6 +153,10 @@ hibitdone:
 scheduleDone:
 	ldx sortBeginSp
 	txs
+	pla
+	tay
+	pla
+	tax
 	rts
 //}
 
