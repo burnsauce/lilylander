@@ -15,6 +15,7 @@
 	lda #mc2
 	sta sprmc2
 }
+.label lsarg = reserve(1, 0)
 
 .macro loadSprite(location, num) {
 	lda #location

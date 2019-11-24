@@ -9,6 +9,14 @@
 .const preFrameRaster = 60
 .const landingMargin = 24
 
+.label nextFrameISR = reserve(0)
+.label aniptr = reserve(0)
+.label ftmp = reserve(0)
+.label phcount = reserve(1,0)
+.label seconds = reserve(1,0)
+.label secondsc = reserve(1,0)
+.label level = reserve(1,1)
+
 .macro scankey(col) {
 	lda #((1 << col) ^ $ff)
 	sta PRA
@@ -116,46 +124,21 @@ ph3ani:	pushFrogRight(frspd)
 	pushFrogDown(3)
 	jmp finishFrame
 
-.align $100
 *=* "frameISR"
 frameISR:
 	startFrame(28)
 	lda keyheld
-	beq !+
-	jmp !++
-!:	lda jumping
+	bne !+
+	lda jumping
 	beq !+
 	jmp skipkey
 !:	lda #$ff
 	sta DDRA
 	lda #0
 	sta DDRB
-	//scankey(0)
 	scankey(7)
 	beq !+
 	jmp holding
-/*!:	scankey(1)
-	beq !+
-	jmp holding
-!:	scankey(2)
-	beq !+
-	jmp holding
-!:	scankey(3)
-	beq !+
-	jmp holding
-!:	scankey(4)
-	beq !+
-	jmp holding
-!:	scankey(5)
-	beq !+
-	jmp holding
-!:	scankey(6)
-	beq !+
-	jmp holding
-!:	scankey(7)
-	beq !+
-	jmp holding
-*/
 !:	lda keyheld
 	bne jumpnow
 	animate()
@@ -288,29 +271,6 @@ mlks:	lda #$ff
 	scankey(7)
 	beq !+
 	jmp mcont
-/*
-!:	scankey(1)
-	beq !+
-	jmp mcont
-!:	scankey(2)
-	beq !+
-	jmp mcont
-!:	scankey(3)
-	beq !+
-	jmp mcont
-!:	scankey(4)
-	beq !+
-	jmp mcont
-!:	scankey(5)
-	beq !+
-	jmp mcont
-!:	scankey(6)
-	beq !+
-	jmp mcont
-!:	scankey(7)
-	beq !+
-	jmp mcont
-*/
 !:	lda keyheld
 	beq !+
 	jmp mcomplete
@@ -353,29 +313,6 @@ lks:	lda #$ff
 	scankey(7)
 	beq !+
 	jmp continue
-/*
-!:	scankey(1)
-	beq !+
-	jmp continue
-!:	scankey(2)
-	beq !+
-	jmp continue
-!:	scankey(3)
-	beq !+
-	jmp continue
-!:	scankey(4)
-	beq !+
-	jmp continue
-!:	scankey(5)
-	beq !+
-	jmp continue
-!:	scankey(6)
-	beq !+
-	jmp continue
-!:	scankey(7)
-	beq !+
-	jmp continue
-*/
 !:	lda keyheld
 	beq !+
 	jmp complete

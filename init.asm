@@ -11,6 +11,7 @@ init:
 	lda #$35
 	sta $01
 
+	initZeroPage()
 	initSID()
 	initDblBuf()
 	initFrame()

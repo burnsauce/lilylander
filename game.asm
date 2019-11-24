@@ -1,4 +1,5 @@
 .const lilyoffset  = 319 - 256
+.label cfreq = reserve(2,0)
 
 .macro jmpsound() {
 	lda #$00

@@ -11,11 +11,9 @@
 
 .segment CopyCode "doColorRamCopy"
 .label doColorRamCopy = *
-	.break
 	.fill 6001, 0
 .segment CopyCode "doBufferRamCopy"
 .label doBufferRamCopy = *
-	.break
 	.fill 6001, 0
 
 .segment Buffer
