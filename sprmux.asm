@@ -86,9 +86,6 @@ initSprMux:
 	mov #$ff : $d01c
 }
 
-.macro scheduleActor(actor) {
-	
-}
 .label sortt = reserve(1,0)
 
 // frame setup
@@ -127,7 +124,6 @@ dosched:
 	sta spriteschedule + 1,x
 	jmp hibitdone
 hibithi:	// x is schedule index
-	.break
 	txa
 	pha
 	lda spriteSchedCount
@@ -159,6 +155,45 @@ scheduleDone:
 	tax
 	rts
 //}
+
+.macro loadSpriteBatch(nomoreh) {
+	mov #0 : sprites_loaded
+	sta xhi_cache
+nextsprite:	
+	lda schedrp
+	cmp spriteSchedCount
+	bne !+
+	jmp nomoreh
+!:	asl
+	tay
+	lda spriteschedule + 1,y
+	ora xhi_cache
+	sta xhi_cache
+	lda spriteschedule,y
+	tay // actor id
+	ldx next_sprite
+	// copy xy position buffers
+	mov curxy,y : $d000,x
+	mov curxy+2,y : $d001,x
+	mov locations,y : sprp2,x
+	mov locations,y : sprp1,x
+	loadSpriteColor locations,y : next_sprite
+posdone:	inc next_sprite
+	lda #$7
+	and next_sprite
+	sta next_sprite
+	inc schedrp
+	lda schedrp
+	cmp spriteSchedCount
+	bne chkfull
+	mov xhi_cache : $d010
+	jmp nomoreh
+chkfull:	inc sprites_loaded
+	lda sprites_loaded
+	cmp #8
+	bne nextsprite
+	mov xhi_cache : $d010
+}
 
 .macro fillBuckets() {
 fillBuckets:

@@ -55,7 +55,7 @@
 .label jumping = reserve(1,0)
 .label keyheld = reserve(1,0)
 .label xscroll = reserve(1,$f)
-.label scrolling = reserve(0)
+.label scrolling = reserve(1,0)
 // Game
 .label powerLevel = reserve(1,0)
 .label lilypos = reserve(1,100)

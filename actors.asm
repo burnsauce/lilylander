@@ -67,7 +67,7 @@ setSpriteMC:
 	sta newxy,y
 	beq noover
 	lda newxy-1,y
-	cmp #60
+	cmp #75
 	bmi noover
 	lda #0
 	sta newxy-1,y

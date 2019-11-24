@@ -4,8 +4,8 @@
 .label framet = reserve(0)
 .label d016_cache = reserve(1,0)
 .label d016_cachec = reserve(1,0)
-.label interp = reserve(1,0)
-.label frame_ready = reserve(1,0)
+//.label interp = reserve(1,0)
+.label copy_request = reserve(1,0)
 .macro initFrame() {
 initFrame:
 
@@ -30,87 +30,84 @@ initFrame:
 	rleUnpackImage(bmb1, smb1, $d800)
 }
 
-*=* "frameISR"
+.macro frameISR() {
 frameISR:
-	setNextISR(topISR, TOP_ISR)
-	mov $d016 : d016_cachec
-	cli
-	lda frame_ready
-	beq !+
-	jmp fskip
-!:
-	// handle frame update
-	// interpolate sprite movement
-	ldy #0
 	lda frame_count
+	cmp #02
+	bne !+
+	jmp ffinal
+!:	lda screen_half
+	cmp #SCR_BOT
+	bne !+
+	jmp bframe
+!:	// top of frame
+	// interpolate actor positions
+interp:	lda frame_count
+	cmp #0
 	beq frame0
 	jmp frame1
-frame0:	jsr scheduleActors
-frame0l:    sub16 newxy,y : oldxy,y : framet
-	lda framet
+frame0:
+.for(var i = 0; i < ACTORS; i++) {
+	sub16 newxy + i : oldxy + i : framet
 	lsr framet
-	sta framet
-	add16 oldxy,y : framet : curxy,y
-	iny
-	iny
+	add16 oldxy + i : framet : curxy + i
 	sec
-	lda newxy,y
-	sbc oldxy,y
+	lda newxy + 2 + i
+	sbc oldxy + 2 + i
 	lsr
 	clc
-	adc oldxy,y
-	sta curxy,y
-	iny
-	cpy #ACTORS * 3
-	beq scroll
-	jmp frame0l
+	adc oldxy + 2 + i
+	sta curxy + 2 + i
+}
+	jmp ffinal
 frame1:
-	mov16 newxy,y : curxy,y
-	iny
-	iny
-	mov newxy,y : curxy,y
-	iny
-	cpy #ACTORS * 3
-	bne frame1
+.for(var i=0; i<ACTORS; i++) {
+	mov16 newxy + i : curxy + i
+	mov newxy + i : curxy + i
+}
+	jmp ffinal
 
-scroll:	// handle scrolling
-	lda #80
-	bit scrolling
+bframe:	jsr scheduleActors
+	// handle scrolling
+	.break
+	lda #$80
+	and scrolling
 	bne !+
 	jmp fdone
 !:	
-	dec scrolling
 	lda scrolling
 	and #$7f
-	bne !+
+	sec
+	sbc #1
+	ora #$80
 	sta scrolling
-	jmp fdone
+	and #$7f
+	bne !+
+	//sta scrolling
+	//jmp fdone
+	lda #$fe
+	sta scrolling
 !:	dec xscroll
 	lda #$f
 	and xscroll
 	sta xscroll
 	lda #$f8
-	and d016_cachec
-	sta d016_cachec 
+	and $d016
+	sta $d016 
 	lda xscroll
 	lsr
-	ora d016_cachec
-	sta d016_cachec
+	ora $d016
+	sta $d016
 	lda xscroll
-	beq !+
-	jmp flast
-!:	mov d016_cachec : d016_cache
-	copyDblMatrix()
-	copyDblBitmap()
-	copyDblRam()
+!:	cmp #$f
+	beq flast
 	jmp fdone
-flast:	cmp #$f
-	bne fdone
+flast:	inc frame_count
+	mov #11 : copy_request
+	switchBank()
+	doSwitchBank()
 	jsr doColorRamCopy
-fdone:	mov d016_cachec : d016_cache
-	lda #1
-	eor frame_count
-	sta frame_count
-	inc frame_ready
-fskip:	pla; tay; pla; tax; pla; rti
-
+	jmp ffinal
+fdone:	inc frame_count
+ffinal:
+}

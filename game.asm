@@ -46,7 +46,8 @@
 	loadActor(FROGF1, frogf1, 35, 170 - 21)
 	loadActor(FROGF2, frogf2, 35 + 24, 170 - 21)
 	loadActor(FROGF4, frogf4, 35 + 24, 170 - 21)
-	moveActorAbs #FROG3 : #50 : #180
+	moveActorAbs #FROG3 : #50 : #200
+	showActor(FROG3)
 }
 
 .macro scankeys() {
@@ -91,8 +92,9 @@ nextphase:	mov frdiv : phase_countdown
 movefrog:	updateFrog()
 	//checkLanded()
 	jmp keysdone
-restfrog:	showActor(FROG3)
-	moveActor #FROG3 : #2 : #0
+restfrog:	
+	//showActor(FROG3)
+	moveActor #FROG3 : #10 : #0
 keysdone:
 	// updateClouds()
 	// updateLilies()

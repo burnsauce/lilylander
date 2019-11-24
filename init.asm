@@ -15,9 +15,9 @@ init:
 	initZeroPage()
 	//initSID()
 	initDblBuf()
+	initActors()
 	initFrame()
 	initSprMux()
-	initActors()
 
 	copySprites()
 	copyDblBitmap()
@@ -26,15 +26,10 @@ init:
 	unrollMemCopy #rmb:#$d800:#1000:#doColorRamCopy
 
 	setSpriteMC(5, 2)
-	// wait for high raster
-!:	lda $d011
-	bpl !-
 
 	mov #$ff : scrolling
 
 	initRasters()
-	jsr updateGame
-	cli
 	jmp ready 
 
 .macro initDblBuf() {
