@@ -15,18 +15,27 @@
 	fastMemCopy(sprbank1, sprbank2, sprsize)
 }
 
-.macro copyDblBitmap() {
+.macro resetToStart() {
+	rleReset(bitmap, breadV, brunCount, brunByte)	
+	rleReset(matrix, mreadV, mrunCount, mrunByte)	
+	rleReset(colorram, rreadV, rrunCount, rrunByte)	
+}
+
+//.macro copyDblBitmap() {
+copyDblBitmap:
 	lda vicBank
 	beq !+
-	jmp other
-!:	fastMemCopy(bmb2 + 8, bmb1, $1f40 - 8)
+	jmp bother
+!:	//fastMemCopy(bmb2 + 8, bmb1, $1f40 - 8)
+	fastMemCopy(bmb2 + 8, bmb1, $fa0 - 8)
 	mov16 #(bmb1 + (39 * 8)) : wrV
-	jmp decrle
-other:  fastMemCopy(bmb1 + 8, bmb2, $1f40 - 8)
+	jmp bdecrle
+bother:  	//fastMemCopy(bmb1 + 8, bmb2, $1f40 - 8)
+  	fastMemCopy(bmb1 + 8, bmb2, $fa0 - 8)
 	mov16 #(bmb2 + (39 * 8)) : wrV
 
 	// Decode RLE Column
-decrle:	ldy #0 
+bdecrle:	ldy #0 
 	ldx #25
 block2:	rleNextByte(bitmap, breadV, brunCount, brunByte)
 	lda brunByte
@@ -38,20 +47,24 @@ block2:	rleNextByte(bitmap, breadV, brunCount, brunByte)
 	add16 wrV : #40 * 8 : wrV
 	dex
 	bne block2
-}
+	rts
+//}
 
-.macro copyDblMatrix() {
+//.macro copyDblMatrix() {
+copyDblMatrix:
 	lda vicBank
 	beq !+
-	jmp other
+	jmp mother
 !:	mov16 #smb1 + 39 : wrV
-	fastMemCopy(smb2 + 1, smb1, $3e8 - 1)
-	jmp decrle
-other:	mov16 #smb2 + 39 : wrV
-	fastMemCopy(smb1 + 1, smb2, $3e8 - 1)
+	//fastMemCopy(smb2 + 1, smb1, $3e8 - 1)
+	fastMemCopy(smb2 + 1, smb1, $1f4 - 1)
+	jmp mdecrle
+mother:	mov16 #smb2 + 39 : wrV
+	//fastMemCopy(smb1 + 1, smb2, $3e8 - 1)
+	fastMemCopy(smb1 + 1, smb2, $1f4 - 1)
 
 	// Decode RLE Column
-decrle:	ldy #0
+mdecrle:	ldy #0
 	ldx #25
 !:	rleNextByte(matrix, mreadV, mrunCount, mrunByte)
 	lda mrunByte
@@ -59,7 +72,8 @@ decrle:	ldy #0
 	add16 wrV : #40 : wrV
 	dex
 	bne !- 
-}
+	rts
+//}
 
 unpackRamColumn:
 	//fastMemCopy($d800 + 1, rmb, $3e8 - 1)

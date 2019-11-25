@@ -12,6 +12,9 @@
 	beq !+
 	lda #1
 	sta _16bitNext(tar)
+	jmp !++
+!:	lda #0
+	sta _16bitNext(tar)
 !:
 }
 .macro jmpsound() {

@@ -14,7 +14,7 @@
 .label phase = reserve(1,0)
 .label jumping = reserve(1,0)
 .label keyheld = reserve(1,0)
-.label xscroll = reserve(1,$f)
+.label xscroll = reserve(1,$7)
 .label scrolling = reserve(2,0)
 .label scrollamt = reserve(2,0)
 .label nextFrameISR = reserve(0)
@@ -71,11 +71,8 @@ finishFrame:
 	lda #$80
 	ora scrolling + 1
 	sta scrolling + 1
-	lda scrolling
-	and #1
-	beq !+
 	inc scrollamt
-!:	lda scrolling + 1
+	lda scrolling + 1
 	and #$7f
 	bne !+
 	lda scrolling
@@ -83,22 +80,21 @@ finishFrame:
 	sta scrolling + 1
 	jmp fdone
 !:	dec xscroll
-	lda #$f
+	lda #$7
 	and xscroll
 	sta xscroll
 	lda #$f8
 	and $d016
 	sta ftmp
 	lda xscroll
-	lsr
 	ora ftmp
 	sta $d016
 	lda xscroll
-	cmp #$e
+	cmp #$6
 	bne fsw
 	inc copy_request
 	jmp fdone
-fsw:	cmp #$f
+fsw:	cmp #$7
 	beq !+
 	jmp fdone
 wait:	lda copy_request
@@ -292,8 +288,6 @@ hit:	mov16 #finishFrame : aniptr
 	mov16 #landed : nextFrameISR
 	getfrogpos ftmp 
 	sub16 ftmp : #60 : scrolling
-	asl scrolling
-	rol scrolling + 1
 	lda #$80
 	ora scrolling + 1
 	sta scrolling + 1
@@ -319,34 +313,32 @@ missed:	startFrame(0)
 lotone:	SIDfreq(1, $0780)
 	disableSprite(6)
 	disableSprite(7)
-mlks:	lda #$ff
-	sta DDRA
-	lda #0
-	sta DDRB
-	scankey(7)
-	beq !+
-	jmp mcont
-!:	lda keyheld
-	beq !+
-	jmp mcomplete
+mlks:
 !:	lda seconds
 	cmp #2
 	bpl !+
 	animate()
 !:	mov #15 : secondsc
-	jmp finishFrame
-mcont:	lda #1
-	sta keyheld
-	lda seconds
-	cmp #2
-	bpl !+
-	animate()
-!:	jmp finishFrame
-mcomplete: lda #0
-	sta keyheld
+	sei
+	lda #%11101111
+	and $d011
+	sta $d011
+	resetToStart()
+.for(var i=0; i<40; i++) {
+	copyDblRam()
+	jsr doColorRamCopy
+	jsr copyDblBitmap
+	jsr copyDblMatrix
+	switchBank()
+	//doSwitchBank()
+}
+	lda #%00010000
+	ora $d011
+	sta $d011
 	initFrog()
 	mov16 #finishFrame : aniptr
 	mov16 #frameISR : nextFrameISR
+	cli
 	jmp finishFrame
 
 * = * "landed Handler"

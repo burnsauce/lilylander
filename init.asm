@@ -12,16 +12,15 @@ init:
 	sta $01
 
 	initZeroPage()
-	initSID()
 	initDblBuf()
 	initFrame()
 
 	copySprites()
-	copyDblBitmap()
-	copyDblMatrix()
+	jsr copyDblBitmap
+	jsr copyDblMatrix
 
-	unrollMemCopy #rmb:#$d800:#1000:#doColorRamCopy
-	unrollMemCopy #$d801:#rmb:#998:#doBufferRamCopy
+	unrollMemCopy #rmb:#$d800:#500:#doColorRamCopy
+	unrollMemCopy #$d801:#rmb:#499:#doBufferRamCopy
 
 	// wait for high raster
 !:	lda $d011
@@ -35,26 +34,7 @@ init:
 	sta $d01a
 	jmp ready 
 
-.macro initSID() {
-	lda #0
-	sta SIDctrl
-	sta SIDctrl + 1
-	sta SIDctrl + 2
-}
-
 .macro initFrame() {
-	mov #12 : frdiv
-	sta phcount
-	lda #0
-	sta phase
-	sta jumping
-	sta keyheld
-	sta powerLevel
-	sta seconds
-	sta scrolling
-	lda #1
-	sta level
-
 	// clear raster hi bit
 	// turn off the display
 	// half V scroll

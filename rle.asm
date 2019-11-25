@@ -1,3 +1,8 @@
+.macro rleReset(resetV, readV, runCount, runByte) {
+	mov #0 : runCount
+	mov16 #resetV : readV
+}
+
 .macro rleNextByte(resetV, readV, runCount, runByte) {
 	txa
 	pha

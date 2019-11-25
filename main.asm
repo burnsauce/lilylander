@@ -24,8 +24,8 @@ ready:	copyDblRam()
 	cli
 loop:	lda copy_request
 	beq loop
-	copyDblMatrix()
-	copyDblBitmap()
+	jsr copyDblMatrix
+	jsr copyDblBitmap
 	copyDblRam()
 	dec copy_request
 !:	jmp loop
