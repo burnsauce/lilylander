@@ -49,13 +49,6 @@
 // DblBuf
 .label vicBank = reserve(1,$02)
 // Frame
-.label frspd = reserve(1,0)
-.label frdiv = reserve(1,12)
-.label phase = reserve(1,0)
-.label jumping = reserve(1,0)
-.label keyheld = reserve(1,0)
-.label xscroll = reserve(1,$f)
-.label scrolling = reserve(1,0)
 // Game
 .label powerLevel = reserve(1,0)
 .label lilypos = reserve(1,100)

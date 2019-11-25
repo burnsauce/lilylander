@@ -6,9 +6,17 @@
 .const DDRB	 = $dc03
 
 .const frameRaster = 251
-.const preFrameRaster = 60
+.const preFrameRaster = 120
 .const landingMargin = 24
 
+.label frspd = reserve(1,0)
+.label frdiv = reserve(1,12)
+.label phase = reserve(1,0)
+.label jumping = reserve(1,0)
+.label keyheld = reserve(1,0)
+.label xscroll = reserve(1,$f)
+.label scrolling = reserve(2,0)
+.label scrollamt = reserve(2,0)
 .label nextFrameISR = reserve(0)
 .label aniptr = reserve(0)
 .label ftmp = reserve(0)
@@ -16,7 +24,8 @@
 .label seconds = reserve(1,0)
 .label secondsc = reserve(1,0)
 .label level = reserve(1,1)
-
+.label exec_count = reserve(1,0)
+.label copy_request = reserve(1,0)
 .macro scankey(col) {
 	lda #((1 << col) ^ $ff)
 	sta PRA
@@ -31,7 +40,6 @@
 	cli
 	delay(delay)
 	mov #3 : $d021
-	moveLily() 
 }
 
 .macro switchToPreframe() {
@@ -54,15 +62,25 @@
 .align $100
 *=* "finishFrame"
 finishFrame:
-	lda #80
-	bit scrolling
+	lda #$80
+	and scrolling + 1
 	bne !+
 	jmp fdone
-!:	dec scrolling
+!:	
+	dec16 scrolling
+	lda #$80
+	ora scrolling + 1
+	sta scrolling + 1
 	lda scrolling
+	and #1
+	beq !+
+	inc scrollamt
+!:	lda scrolling + 1
 	and #$7f
 	bne !+
-	sta scrolling
+	lda scrolling
+	bne !+
+	sta scrolling + 1
 	jmp fdone
 !:	dec xscroll
 	lda #$f
@@ -76,20 +94,26 @@ finishFrame:
 	ora ftmp
 	sta $d016
 	lda xscroll
+	cmp #$e
+	bne fsw
+	inc copy_request
+	jmp fdone
 fsw:	cmp #$f
 	beq !+
 	jmp fdone
+wait:	lda copy_request
+	bne wait
 !:	switchBank()
 	doSwitchBank()
 	jsr doColorRamCopy
-fdone:	
+fdone:	moveLilies() 
+	dec exec_count
 	finishISR()
 
 *=* "preFrameISR"
 preFrameISR:
 	pha
-	.break
-	delay(28)
+	delay(40)
 	mov #6 : $d021
 	mov16 nextFrameISR : $fffe
 	lda #frameRaster
@@ -126,8 +150,17 @@ ph3ani:	pushFrogRight(frspd)
 
 *=* "frameISR"
 frameISR:
-	startFrame(28)
-	lda keyheld
+	// GAME LOGIC
+	//startFrame(28)
+	startFrame(0)
+	inc exec_count
+	cmp #$02
+	bcs !+
+	jmp skip
+!:	lda copy_request
+	beq !+
+	jmp skip
+!:	lda keyheld
 	bne !+
 	lda jumping
 	beq !+
@@ -158,8 +191,7 @@ jumpnow:
 	sta frdiv
 	lda #0
 	sta keyheld
-	lda #$ff
-	sta scrolling
+	lda powerLevel
 	jmp skipkey
 holding:
 	lda keyheld
@@ -189,13 +221,17 @@ skipkey:
 	inc phase
 	lda phase
 	cmp #1
-	beq !+
+	beq ph1
 	jmp ph2
-!:	jmpsound()
+ph1:	jmpsound()
 	loadSprite(frogj1, 0)
 	loadSprite(frogj2, 1)
 	loadSprite(frogj3, 2)
 	loadSprite(blank, 3)
+	enableSprite(6)
+	enableSprite(7)
+	loadSprite(lilys11, 6)
+	loadSprite(lilys12, 7)
 	mov16 #ph1ani : aniptr
 	animate()
 ph2:	cmp #2
@@ -206,6 +242,8 @@ ph2:	cmp #2
 	loadSprite(frogs2, 1)
 	loadSprite(blank, 2)
 	loadSprite(blank, 3)
+	loadSprite(lilys21, 6)
+	loadSprite(lilys22, 7)
 	mov16 #ph2ani : aniptr
 	animate()
 ph3:	cmp #3
@@ -213,8 +251,10 @@ ph3:	cmp #3
 	jmp ph0
 !:	loadSprite(frogf1, 0)																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																											 
 	loadSprite(frogf2, 1)
+	loadSprite(frogf3, 2)
 	loadSprite(frogf4, 3)
-	loadSprite(blank, 2)
+	loadSprite(lilys31, 6)
+	loadSprite(lilys32, 7)
 	mov16 #ph3ani : aniptr
 	animate()
 ph0:	lda #0
@@ -222,9 +262,11 @@ ph0:	lda #0
 	sta jumping
 	sta keyheld
 	resetPower()
+	loadSprite(lilys41, 6)
+	loadSprite(lilys42, 7)
 	sec
 	lda $d006 // frog
-	sbc $d00e // lily
+	sbc $d00a // lily
 	clc
 	adc #[landingMargin / 2]
 	bpl gotabs
@@ -241,19 +283,30 @@ miss:	mov16 #missed : nextFrameISR
 	SIDgate(1, 1)
 	animate()
 hit:	mov16 #finishFrame : aniptr
-	loadSprite(frog2, 3)
-	loadSprite(blank, 0)
-	loadSprite(blank, 1)
-	loadSprite(blank, 2)
+	disableSprite(4)
+	disableSprite(5)
+	loadSprite(frogl1, 0)
+	loadSprite(frogl2, 1)
+	loadSprite(frogl3, 2)
+	loadSprite(frogl4, 3)
 	mov16 #landed : nextFrameISR
+	getfrogpos ftmp 
+	sub16 ftmp : #60 : scrolling
+	asl scrolling
+	rol scrolling + 1
+	lda #$80
+	ora scrolling + 1
+	sta scrolling + 1
 	mov #0 : seconds
 	mov #15 : secondsc
 	SIDfreq(1, $0F00)
 	SIDgate(1, 1)
 	jmp finishFrame
+skip:	dec exec_count
+	finishISR()
 
 * = * "Missed Handler"
-missed:	startFrame(28)
+missed:	startFrame(0)
 	dec secondsc
 	bne mlks
 	mov #15 : secondsc
@@ -264,6 +317,8 @@ missed:	startFrame(28)
 	SIDgate(1, 0)
 	jmp mlks
 lotone:	SIDfreq(1, $0780)
+	disableSprite(6)
+	disableSprite(7)
 mlks:	lda #$ff
 	sta DDRA
 	lda #0
@@ -295,10 +350,11 @@ mcomplete: lda #0
 	jmp finishFrame
 
 * = * "landed Handler"
-landed:	startFrame(28)
+landed:	startFrame(0)
 	dec secondsc
-	bne lks
-	mov #15 : secondsc
+	beq !+
+	jmp lks
+!:	mov #15 : secondsc
 	inc seconds
 	lda seconds
 	cmp #1
@@ -306,19 +362,16 @@ landed:	startFrame(28)
 	SIDgate(1, 0)
 	jmp lks
 hitone:	SIDfreq(1, $1E00)
-lks:	lda #$ff
-	sta DDRA
-	lda #0
-	sta DDRB
-	scankey(7)
-	beq !+
-	jmp continue
-!:	lda keyheld
-	beq !+
-	jmp complete
-!:	jmp finishFrame
-continue: lda #1
-	sta keyheld
+	disableSprite(6)
+	disableSprite(7)
+	loadSprite(frog1, 0)
+	loadSprite(frog2, 1)
+	loadSprite(frog3, 2)
+	loadSprite(frog4, 3)
+lks:	lda scrolling + 1
+	and #$80
+	beq complete
+	
 	jmp finishFrame
 complete: 
 	mov16 #frameISR : nextFrameISR

@@ -1,6 +1,19 @@
-.const lilyoffset  = 319 - 256
-.label cfreq = reserve(2,0)
+.label lily1offset = reserve(1,319-150)
+.label frogoffset = reserve(1,60)
+.label frogpos = reserve(1,0)
 
+.label cfreq = reserve(2,0)
+#import "sin.asm"
+.pseudocommand getfrogpos tar {
+	lda $d002
+	sta tar
+	lda $d010
+	and #2
+	beq !+
+	lda #1
+	sta _16bitNext(tar)
+!:
+}
 .macro jmpsound() {
 	lda #$00
 	sta cfreq
@@ -27,20 +40,6 @@
 }
 
 .macro loadLevel(lvl) {
-	lda #100
-	sta lilypos
-
-	lda #0
-	sta $d40f
-	lda lvl
-	asl
-	sta $d40e
-	lda #%00010001
-	sta $d412
-	lda #$0f
-	sta $d414
-	lda #%10001111
-	sta $d418
 }
 				
 .macro initLily() {
@@ -48,54 +47,106 @@
 	moveSprite(4, 0, 200)
 	loadSprite(lily2, 5)
 	moveSprite(5, 0, 200)
-	loadSprite(lily3, 6)
-	moveSprite(6, 0, 200 + 21)
-	loadSprite(lily4, 7)
-	moveSprite(7, 0, 200 + 21)
 }
 
 .macro initFrog() {
 	.const startx = 35
 	.const starty = 180
-	loadSprite(blank, 0)
-	loadSprite(blank, 1)
-	loadSprite(frog2, 2)
-	loadSprite(blank, 3)
+	loadSprite(frog1, 0)
+	loadSprite(frog2, 1)
+	loadSprite(frog3, 2)
+	loadSprite(frog4, 3)
 	moveSprite(0, startx, starty)
 	moveSprite(1, startx + 24, starty)
 	moveSprite(2, startx, starty + 21)
 	moveSprite(3, startx + 24, starty + 21)
+
+	loadSprite(lilys11, 6)
+	moveSprite(6, startx, starty + 21)
+	disableSprite(6)
+	loadSprite(lilys12, 7)
+	moveSprite(7, startx + 24, starty + 21)
+	disableSprite(7)
+	enableSprite(4)
+	enableSprite(5)
 	
-	setSpriteMC(5, 2)
+	setSpriteMC(5, 13)
 }
-					
-.macro moveLily() {
-	lda $d41b	// osc 3
-	lsr		// 0-127
+
+.segment Data "Level Data"
+leveldata:
+.for(var i=0; i<25;i++) {
+	.word i * $40
+}
+
+.segment Code
+.label lily1ramp = reserve(2,0)			
+.label frogramp = reserve(2,0)
+
+.macro scrollsprite(num) {
+	lda $d000 + num * 2
+	bne lo
+	lda #$ff ^ (1 << num)
+	and $d010
+	sta $d010
+lo:	dec $d000 + num * 2
+}
+
+.macro moveLilies() {
+	lda scrollamt
+	bne !+
+	jmp movelily
+!:	scrollsprite(0)
+	scrollsprite(1)
+	scrollsprite(2)
+	scrollsprite(3)
+	dec scrollamt
+	// update lily1 (target lily)
+movelily:	ldy level
+	iny
+	tya
+	asl
+	tay
+	add16 leveldata,y : lily1ramp : lily1ramp
+!:	sin lily1ramp + 1 : lilypos
 	clc
-	adc #100
-done:	sta lilypos
+	adc #128
+	lsr
+	sta lilypos
+	lda level
+	lda scrollamt 
+	beq done
+	dec lily1offset
+	dec scrollamt
+done:	lda lilypos	
 	clc
-	adc #lilyoffset - 24
-	sta $d008
-	sta $d00C
+	adc lily1offset
+	bcc noover
+	// overflow already
+	sbc #24
+	jmp foundhi
+noover:	// no overflow yet
+	sbc #23
+	clc
+foundhi:	sta $d008
+	//sta $d00C
 	bcc !+
-	lda #%01010000
+	lda #%00010000
 	ora $d010
 	jmp !++
-!:	lda #%10101111
+!:	lda #%11101111
 	and $d010
 !:	sta $d010
 	lda lilypos
 	clc
-	adc #lilyoffset
+	adc lily1offset
 	sta $d00A
-	sta $d00E
+	//sta $d00E
 	bcc !+
-	lda #%10100000
+	lda #%00100000
 	ora $d010
 	jmp !++
-!:	lda #%01011111
+!:	lda #%11011111
 	and $d010
 !:	sta $d010
 }

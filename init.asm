@@ -33,7 +33,6 @@ init:
 	// enable interrupt
 	lda #1
 	sta $d01a
-	cli
 	jmp ready 
 
 .macro initSID() {

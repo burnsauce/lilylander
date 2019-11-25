@@ -21,20 +21,11 @@
 
 .segment Code "Main Loop"
 ready:	copyDblRam()
-
-	//jsr doBufferRamCopy
-	lda #$80
-loop:	bit scrolling
+	cli
+loop:	lda copy_request
 	beq loop
-scrl:	lda xscroll
-	cmp #$e
-	bne scrl
 	copyDblMatrix()
 	copyDblBitmap()
-	//jsr doBufferRamCopy
 	copyDblRam()
-	lda #$80
-	bit scrolling
-	beq !+
-	jmp scrl
+	dec copy_request
 !:	jmp loop

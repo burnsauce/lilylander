@@ -71,19 +71,22 @@
 }
 
 .macro pushFrogRight(amt) {
-	lda $d000
+	lda scrollamt
+	beq !+
+	dec $d000
+	dec scrollamt
+!:	lda $d000
 	clc
 	adc amt
-	sta $d000
+foundhi:	sta $d000
 	sta $d004
 	bcc pfr1
 	lda #((1 << 0) | (1 << 2))
 	ora sprxhi
 	sta sprxhi
 pfr1:	lda $d002
-	clc
 	adc amt
-	sta $d002
+foundhi1:	sta $d002
 	sta $d006
 	bcc pfr2
 	lda #((1 << 1) | (1 << 3))

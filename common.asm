@@ -70,9 +70,9 @@ inc16:
 .pseudocommand dec16 a {
 dec16:
 	lda a
-	bne !+
+	bne declo
 	dec _16bitNext(a)
-!:	dec a
+declo:	dec a
 }
 
 .pseudocommand cmp16 a : b {
