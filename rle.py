@@ -11,7 +11,7 @@ def main():
     args = p.parse_args()
     im = Image.open(args.input)
     size = im.size
-    bgcol = 4
+    bgcol = 0
     for y in range(im.size[1]/8):
         for x in range(im.size[0]/4):
             colors = set()
@@ -204,7 +204,7 @@ class OutputData:
         bm = []
         sm = []
         rd = []
-        height = 25
+        height = 13
         width = im.size[0] / 4
         for x in range(width):
             for y in range(height):
@@ -217,18 +217,23 @@ class OutputData:
         return True
 
     def printASM(self):
-        print "bgcolor:\t.byte", self.bgcolor
-        print '*=* "RLE Bitmap"'
+        print '.segment Data "RLE Bitmap"'
         print "bitmap:"
         printBytes(self.bitmap)
-        print '*=* "RLE Matrix"'
+        print '.segment RLEData1 "RLE Matrix"'
         print "matrix:"
         printBytes(self.screenmatrix)
         print '*=* "RLE Color Ram"'
         print "colorram:"
         printBytes(self.ramdata)
+        print "bgcolor:\t.byte", self.bgcolor
 
-        print "// Total size: %d bytes" % (len(self.bitmap) + len(self.screenmatrix) + len(self.ramdata))
+        print "// Bitmap data size: $%04x" % len(self.bitmap)
+        print "// Matrix data size: $%04x" % len(self.screenmatrix)
+        print "//    Ram data size: $%04x" % len(self.ramdata)
+		
+        print "// Total size: $%04x bytes" % (len(self.bitmap) + len(self.screenmatrix) + len(self.ramdata))
+
 
 if __name__ == '__main__':
     main()

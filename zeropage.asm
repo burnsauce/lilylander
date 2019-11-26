@@ -16,7 +16,7 @@
 .function reserve(initv) {
 	.return reserve(2, initv)
 }
-
+.segment Zeropage [start=$02, min=$02, max=$ff, virtual] "Zeropage Variables"
 .macro initZeroPage() {
 .for(var i=0; i<zpDict.keys().size(); i++) {
 	.var iv = zpDict.keys().get(i)
@@ -26,6 +26,9 @@
 		.var zpv = zpvl.get(j)
 		.for(var k=0; k<zpv.size; k++) {
 			sta zpv.addr + k
+			.segment Zeropage
+			.fill zpv.size, 0
+			.segment InitCode
 		}
 	}
 }

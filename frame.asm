@@ -26,6 +26,8 @@
 .label level = reserve(1,1)
 .label exec_count = reserve(1,0)
 .label copy_request = reserve(1,0)
+.label score = reserve(2,0)
+
 .macro scankey(col) {
 	lda #((1 << col) ^ $ff)
 	sta PRA
@@ -59,27 +61,25 @@
 	}
 }
 
-.align $100
 *=* "finishFrame"
 finishFrame:
 	lda #$80
 	and scrolling + 1
-	bne !+
+	bne chkscroll
 	jmp fdone
-!:	
-	dec16 scrolling
+chkscroll:	dec16 scrolling
 	lda #$80
 	ora scrolling + 1
 	sta scrolling + 1
 	inc scrollamt
 	lda scrolling + 1
 	and #$7f
-	bne !+
+	bne doscroll
 	lda scrolling
-	bne !+
+	bne doscroll
 	sta scrolling + 1
 	jmp fdone
-!:	dec xscroll
+doscroll:	dec xscroll
 	lda #$7
 	and xscroll
 	sta xscroll
@@ -92,16 +92,14 @@ finishFrame:
 	lda xscroll
 	cmp #$6
 	bne fsw
-	inc copy_request
 	jmp fdone
 fsw:	cmp #$7
 	beq !+
 	jmp fdone
-wait:	lda copy_request
-	bne wait
 !:	switchBank()
 	doSwitchBank()
-	jsr doColorRamCopy
+	//jsr doColorRamCopy
+	inc copy_request
 fdone:	moveLilies() 
 	dec exec_count
 	finishISR()
@@ -187,7 +185,7 @@ jumpnow:
 	sta frdiv
 	lda #0
 	sta keyheld
-	lda powerLevel
+	//lda powerLevel // ???
 	jmp skipkey
 holding:
 	lda keyheld
@@ -272,12 +270,14 @@ ph0:	lda #0
 gotabs:	cmp #landingMargin
 	bpl miss
 	jmp hit
+
 miss:	mov16 #missed : nextFrameISR
 	mov #0 : seconds
 	mov #15 : secondsc
 	SIDfreq(1, $0F00)
 	SIDgate(1, 1)
 	animate()
+
 hit:	mov16 #finishFrame : aniptr
 	disableSprite(4)
 	disableSprite(5)
@@ -286,8 +286,11 @@ hit:	mov16 #finishFrame : aniptr
 	loadSprite(frogl3, 2)
 	loadSprite(frogl4, 3)
 	mov16 #landed : nextFrameISR
+	// set scrolling amount to d - 60
 	getfrogpos ftmp 
 	sub16 ftmp : #60 : scrolling
+	add16 score : scrolling : score
+	mov16 #0 : lily1ramp
 	lda #$80
 	ora scrolling + 1
 	sta scrolling + 1
@@ -296,52 +299,79 @@ hit:	mov16 #finishFrame : aniptr
 	SIDfreq(1, $0F00)
 	SIDgate(1, 1)
 	jmp finishFrame
+
 skip:	dec exec_count
 	finishISR()
 
+.label waiting = reserve(1,0)
+
 * = * "Missed Handler"
 missed:	startFrame(0)
-	dec secondsc
-	bne mlks
-	mov #15 : secondsc
+	lda waiting
+	beq !+
+	jmp chkcopy
+!:	dec secondsc
+	beq !+
+	animate()
+!:	mov #15 : secondsc
 	inc seconds
 	lda seconds
 	cmp #1
 	beq lotone
 	SIDgate(1, 0)
-	jmp mlks
+	jmp wait1more
 lotone:	SIDfreq(1, $0780)
 	disableSprite(6)
 	disableSprite(7)
-mlks:
-!:	lda seconds
-	cmp #2
-	bpl !+
 	animate()
-!:	mov #15 : secondsc
-	sei
+wait1more:	lda seconds
+	cmp #3
+	bne !+
+	animate()
+!:	mov16 #finishFrame : aniptr
+chkcopy:	lda copy_request
+	beq !+
+	lda #1
+	sta waiting
+	animate()
+!:	sei
+	lda #0
+	sta waiting
+	mov #15 : secondsc
+	mov16 #0 : lily1ramp
 	lda #%11101111
 	and $d011
 	sta $d011
+	
 	resetToStart()
-.for(var i=0; i<40; i++) {
-	copyDblRam()
-	jsr doColorRamCopy
-	jsr copyDblBitmap
-	jsr copyDblMatrix
+.for(var i=0; i<41; i++) {
+	//inc $d020
+	//inc $d020
 	switchBank()
-	//doSwitchBank()
+	jsr copyDblBitmap
+	//inc $d020
+	jsr copyDblMatrix
+	//inc $d020
+	jsr doColorRamCopy
+	copyDblRam()
 }
+	doSwitchBank()
+	initFrog()
+	mov #7 : xscroll
+	lda #$f8
+	and $d016
+	ora xscroll
+	sta $d016
+	mov #0 : level
 	lda #%00010000
 	ora $d011
 	sta $d011
-	initFrog()
 	mov16 #finishFrame : aniptr
 	mov16 #frameISR : nextFrameISR
 	cli
 	jmp finishFrame
 
-* = * "landed Handler"
+* = * "Landed Handler"
 landed:	startFrame(0)
 	dec secondsc
 	beq !+
@@ -361,14 +391,15 @@ hitone:	SIDfreq(1, $1E00)
 	loadSprite(frog3, 2)
 	loadSprite(frog4, 3)
 lks:	lda scrolling + 1
-	and #$80
-	beq complete
-	
+	and #$7f
+	beq chklo
 	jmp finishFrame
-complete: 
+chklo:	lda scrolling
+	beq complete
+	jmp finishFrame
+complete:	
 	mov16 #frameISR : nextFrameISR
 	inc level
-	loadLevel(level)
 	lda #0
 	sta keyheld
 	SIDgate(1, 0)

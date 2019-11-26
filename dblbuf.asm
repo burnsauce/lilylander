@@ -21,7 +21,6 @@
 	rleReset(colorram, rreadV, rrunCount, rrunByte)	
 }
 
-//.macro copyDblBitmap() {
 copyDblBitmap:
 	lda vicBank
 	beq !+
@@ -48,9 +47,7 @@ block2:	rleNextByte(bitmap, breadV, brunCount, brunByte)
 	dex
 	bne block2
 	rts
-//}
 
-//.macro copyDblMatrix() {
 copyDblMatrix:
 	lda vicBank
 	beq !+
@@ -90,6 +87,7 @@ unpackRamColumn:
 	rts
 
 .macro copyDblRam() {
-	jsr doBufferRamCopy
+	fastMemCopy($d800 + 1, rmb, $1f4 - 1)
+	//jsr doBufferRamCopy
 	jsr unpackRamColumn
 }

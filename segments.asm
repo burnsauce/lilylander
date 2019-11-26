@@ -1,54 +1,43 @@
-.file [name="ll.prg", segments="Code,Data,CopyCode,Graphics1,InitCode"]
-.segmentdef Code [start=$810]
-.segmentdef Data [startAfter="Code"]
-.segmentdef Graphics1 [start=$4000]
-.segmentdef CopyCode [startAfter="Graphics1", virtual]
-.segmentdef Graphics2 [start=$C000]
-.segmentdef Buffer [startAfter="Data", align=$100]
-.segmentdef InitCode [startAfter="Data", modify="BasicUpstart", _start=init, align=$100]
-
-#import "disk.asm"
-
-.segment CopyCode "doColorRamCopy"
-.label doColorRamCopy = *
-	.fill 6001, 0
-.segment CopyCode "doBufferRamCopy"
-.label doBufferRamCopy = *
-	.fill 6001, 0
-
-.segment Buffer
-.label	rmb = *
-* = rmb "Color Ram Buffer" virtual
-	.fill $3f8,0
-
-.segment Graphics1
-.label 	smb1 = $4000
-* = smb1 "Screen Matrix Buffer 1" virtual
-	.fill $3f8, 0
-.label sprp1 = *
-
-.align $40
-.label sprbank1 = *
-* = * "Sprites"
+.segment Stack	[start=$0100, min=$0100, max=$01ff, virtual] "Stack"
+.fill $100, 0
+//.segmentdef Free1	[start=$0200, min=$0200, max=$080f, virtual, fill]
+.segment CopyCode	[startAfter="Stack", max=$0200 + $0bb9, virtual]
+.label doColorRamCopy = $7f40
+.fill $0bb9,0
+.segmentdef Code 	[startAfter="CopyCode"]
+.segmentdef Data 	[startAfter="Code"]
+.segmentdef Free2	[startAfter="Buffer", max=$3fff, virtual]
+.segment MatrixBuf	[start=$4000, min=$4000, max=$43f7, virtual]
+.label smb1 = $4000
+.fill $3f8,0
+.segment SprPtrs1	[startAfter="MatrixBuf", max=$43ff, virtual]
+.label sprp1 = $43f8
+.fill 8,0
+.segment Sprites1	[startAfter="SprPtrs1"]
+.label sprbank1 = $4400
 #import "sprites.asm"
-.label sprsize = * - sprbank1
+.segmentdef Buffer 	[startAfter="Sprites1", align=$100]
+.label rmb = *
+.segmentdef InitCode 	[startAfter="Sprites1", modify="BasicUpstart", _start=init, align=$100]
+//.segment Free3	[startAfter="Sprites1", max=$5fff, virtual]
+.segment BitmapBuf	[start=$6000, min=$6000, max=$7f3f, virtual, fill]
+.label bmb1 = $6000
+.fill $1f40,0
+.segment Free4	[startAfter="CopyCode", max=$bfff, virtual]
+.segment MatrixBuf2 	[start=$c000, min=$c000, max=$c3f7, virtual, fill]
+.label smb2 = $c000
+.fill $3f8,0
+.segment SprPtrs2	[startAfter="MatrixBuf2", max=$c3ff, virtual]
+.label sprp2 = $c3f8
+.fill 8,0
+.segment Sprites2	[startAfter="SprPtrs2", virtual]
+.label sprbank2 = $c400
+		.fill sprsize, 0
 
-.label 	bmb1 = $6000
-* = bmb1 "Bitmap Buffer 1" virtual
-	.fill $1f40, 0
+.segment Free5	[startAfter="Sprites2", max=$dfff, virtual]
+.segment BitmapBuf2	[start=$e000, min=$e000, max=$ff40, virtual, fill]
+.label bmb2 = $e000
+.fill $1f40, 0
 
-
-.segment Graphics2
-.label 	smb2 = $c000
-* = smb2 "Screen Matrix Buffer 2" virtual
-	.fill $3f8, 0
-.label sprp2 = *
-
-.align $40
-.label sprbank2 = *
-* = * "Bank 2 Sprites" virtual
-	.fill sprsize, 0
-
-.label 	bmb2 = $e000
-*= 	bmb2 "Bitmap Buffer 2" virtual
-	.fill $1f40, 0
+.file [name="ll.prg", segments="Code,Data,InitCode,Sprites1"]
+#import "disk.asm"

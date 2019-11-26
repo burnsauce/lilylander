@@ -20,7 +20,7 @@ init:
 	jsr copyDblMatrix
 
 	unrollMemCopy #rmb:#$d800:#500:#doColorRamCopy
-	unrollMemCopy #$d801:#rmb:#499:#doBufferRamCopy
+	//unrollMemCopy #$d801:#rmb:#499:#doBufferRamCopy
 
 	// wait for high raster
 !:	lda $d011
@@ -59,9 +59,9 @@ init:
 	sta $d018
 
 	rleUnpackImage(bmb1, smb1, $d800)
+	.break
 	initFrog()
 	initLily()
-	loadLevel(level)
 	mov16 #finishFrame : aniptr
 	setInterrupt(frameISR)
 }

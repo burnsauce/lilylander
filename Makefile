@@ -1,5 +1,6 @@
 main.prg: *.asm
-	java -jar KickAss.jar -cfgfile build.cfg main.asm
+	java -jar KickAss.jar -cfgfile build.cfg main.asm > memmap.txt	
+	python memmap.py
 clean:
 	rm *.prg
 run:
