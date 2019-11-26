@@ -217,13 +217,13 @@ class OutputData:
         return True
 
     def printASM(self):
-        print '.segment Data "RLE Bitmap"'
+        print '.segment RLEBitmap "RLE Bitmap"'
         print "bitmap:"
         printBytes(self.bitmap)
-        print '.segment RLEData1 "RLE Matrix"'
+        print '.segment RLEMatrix "RLE Matrix"'
         print "matrix:"
         printBytes(self.screenmatrix)
-        print '*=* "RLE Color Ram"'
+        print '.segment RLEColor "RLE Color Ram"'
         print "colorram:"
         printBytes(self.ramdata)
         print "bgcolor:\t.byte", self.bgcolor

@@ -79,7 +79,7 @@
 .segment Data "Level Data"
 leveldata:
 .for(var i=0; i<25;i++) {
-	.word i * $40
+	.word (i + 1) * $40
 }
 
 .segment Code

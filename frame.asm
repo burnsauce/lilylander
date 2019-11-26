@@ -6,7 +6,7 @@
 .const DDRB	 = $dc03
 
 .const frameRaster = 251
-.const preFrameRaster = 120
+.const preFrameRaster = 152
 .const landingMargin = 24
 
 .label frspd = reserve(1,0)
@@ -23,7 +23,7 @@
 .label phcount = reserve(1,0)
 .label seconds = reserve(1,0)
 .label secondsc = reserve(1,0)
-.label level = reserve(1,1)
+.label level = reserve(1,0)
 .label exec_count = reserve(1,0)
 .label copy_request = reserve(1,0)
 .label score = reserve(2,0)
@@ -41,7 +41,7 @@
 	asl $d019
 	cli
 	delay(delay)
-	mov #3 : $d021
+	mov bgcolor : $d021
 }
 
 .macro switchToPreframe() {
@@ -98,10 +98,10 @@ fsw:	cmp #$7
 	jmp fdone
 !:	switchBank()
 	doSwitchBank()
-	//jsr doColorRamCopy
 	inc copy_request
 fdone:	moveLilies() 
 	dec exec_count
+	asl $d019
 	finishISR()
 
 *=* "preFrameISR"
@@ -343,19 +343,17 @@ chkcopy:	lda copy_request
 	and $d011
 	sta $d011
 	
-	resetToStart()
-.for(var i=0; i<41; i++) {
-	//inc $d020
-	//inc $d020
-	switchBank()
+	lda #2
+	sta vicBank
+	lda $dd00
+	and #%11111100
+	ora #2
+	sta $dd00
+	jsr rleUnpackImage
 	jsr copyDblBitmap
-	//inc $d020
 	jsr copyDblMatrix
-	//inc $d020
-	jsr doColorRamCopy
-	copyDblRam()
-}
-	doSwitchBank()
+	jsr copyDblRam	
+
 	initFrog()
 	mov #7 : xscroll
 	lda #$f8
@@ -366,9 +364,14 @@ chkcopy:	lda copy_request
 	lda #%00010000
 	ora $d011
 	sta $d011
+	.break
 	mov16 #finishFrame : aniptr
 	mov16 #frameISR : nextFrameISR
-	cli
+	lda #preFrameRaster
+	sta $d012
+	lda #$7f
+	and $d011
+	sta $d011
 	jmp finishFrame
 
 * = * "Landed Handler"

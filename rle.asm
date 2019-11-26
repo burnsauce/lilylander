@@ -33,6 +33,11 @@ done:	pla
 
 }
 
+.segment Code "rleUnpackImage"
+rleUnpackImage:
+	rleUnpackImage(bmb1, smb1, $d800)
+	rts
+
 .macro rleUnpackImage(bmbase, mbase, rbase) {
 	lda bgcolor
 	sta $d021
@@ -56,7 +61,7 @@ done:	pla
 	lda #40
 	sta column
 	ldy #0
-	ldx #25
+	ldx #13
 block:	rleNextByte(bitmap, breadV, brunCount, brunByte)
 	lda brunByte
 	sta (wrV),y
@@ -68,7 +73,7 @@ block:	rleNextByte(bitmap, breadV, brunCount, brunByte)
 	dex
 	beq !+
 	jmp block
-!:	ldx #25
+!:	ldx #13
 	add16 wrV2 : #8 : wrV2
 	mov16 wrV2 : wrV
 	dec column
@@ -80,7 +85,7 @@ block:	rleNextByte(bitmap, breadV, brunCount, brunByte)
 	lda #40
 	sta column
 	ldy #0
-	ldx #25
+	ldx #13
 	mov16 wrV2 : wrV
 col2:	rleNextByte(matrix, mreadV, mrunCount, mrunByte)
 	lda mrunByte
@@ -89,7 +94,7 @@ col2:	rleNextByte(matrix, mreadV, mrunCount, mrunByte)
 	dex
 	beq !+
 	jmp col2
-!:	ldx #25
+!:	ldx #13
 	inc16 wrV2
 	mov16 wrV2 : wrV
 	dec column
@@ -102,7 +107,7 @@ col2:	rleNextByte(matrix, mreadV, mrunCount, mrunByte)
 	lda #40
 	sta column
 	ldy #0
-	ldx #25
+	ldx #13
 col3:	rleNextByte(colorram, rreadV, rrunCount, rrunByte)
 	lda rrunByte
 	sta (wrV),y
@@ -110,7 +115,7 @@ col3:	rleNextByte(colorram, rreadV, rrunCount, rrunByte)
 	dex
 	beq !+
 	jmp col3
-!:	ldx #25
+!:	ldx #13
 	inc16 wrV2
 	mov16 wrV2 : wrV
 	dec column

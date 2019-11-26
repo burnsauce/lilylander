@@ -19,8 +19,7 @@ init:
 	jsr copyDblBitmap
 	jsr copyDblMatrix
 
-	unrollMemCopy #rmb:#$d800:#500:#doColorRamCopy
-	//unrollMemCopy #$d801:#rmb:#499:#doBufferRamCopy
+	unrollMemCopy #rmb:#$d800:#(13 * 40):#doColorRamCopy
 
 	// wait for high raster
 !:	lda $d011
@@ -58,8 +57,11 @@ init:
 	lda #%00001000
 	sta $d018
 
-	rleUnpackImage(bmb1, smb1, $d800)
-	.break
+	//rleUnpackImage(bmb1, smb1, $d800)
+	jsr rleUnpackImage
+	zeroMem(bmb2 + 13 * 8 * 40, 12 * 8 * 40)
+	zeroMem(smb2 + 13 * 40, 12 * 40)
+	zeroMem($d800 + 13 * 40, 12 * 40)
 	initFrog()
 	initLily()
 	mov16 #finishFrame : aniptr

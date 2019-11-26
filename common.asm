@@ -103,6 +103,34 @@ finishIsr:
 	pla; tay; pla; tax; pla; rti
 }
 
+.macro zeroMem(to, size) {
+	pha
+	tya
+	pha
+	ldy #0
+	lda #0
+	.var pages = floor(size / $100)
+	.if(pages > 0) {
+page:	.for(var i = 0; i < pages; i++) {
+	sta to + (i * $100), y
+	} // for
+	iny
+	beq !+
+	jmp page
+	} // if
+	.var rem = size - (pages * $100)
+!:
+	.if(rem > 0) {
+	sta to + (pages * $100), y
+	iny
+	cpy #rem
+	bne !-
+	}
+	pla
+	tay
+	pla
+}
+
 .macro fastMemCopy(from, to, size) {
 fastMemCopy:
 	pha

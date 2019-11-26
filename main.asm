@@ -20,13 +20,13 @@
 #import "init.asm"
 
 .segment Code "Main Loop"
-ready:	copyDblRam()
+ready:	jsr copyDblRam
 	cli
 loop:	lda copy_request
 	beq loop
 	jsr doColorRamCopy
 	jsr copyDblMatrix
 	jsr copyDblBitmap
-	copyDblRam()
+	jsr copyDblRam
 	dec copy_request
 !:	jmp loop
