@@ -42,19 +42,16 @@
 	sta powerLevel
 }
 
-.macro loadLevel(lvl) {
-}
-				
 .macro initLily() {
 	loadSprite(lily1, 4)
-	moveSprite(4, 0, 200)
+	moveSprite(4, 0, 214)
 	loadSprite(lily2, 5)
-	moveSprite(5, 0, 200)
+	moveSprite(5, 0, 214)
 }
 
 .macro initFrog() {
 	.const startx = 35
-	.const starty = 180
+	.const starty = 196
 	loadSprite(frog1, 0)
 	loadSprite(frog2, 1)
 	loadSprite(frog3, 2)
@@ -78,8 +75,8 @@
 
 .segment Data "Level Data"
 leveldata:
-.for(var i=0; i<25;i++) {
-	.word (i + 1) * $40
+.for(var i=0; i<32;i++) {
+	.word (i + 1) * $28
 }
 
 .segment Code
@@ -103,6 +100,8 @@ lo:	dec $d000 + num * 2
 	scrollsprite(1)
 	scrollsprite(2)
 	scrollsprite(3)
+	scrollsprite(6)
+	scrollsprite(7)
 	dec scrollamt
 	// update lily1 (target lily)
 movelily:	ldy level

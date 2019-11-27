@@ -25,7 +25,7 @@
 	inc16 readV
 	dec runCount
 	jmp done
-reset:  mov16 #resetV : readV
+reset:	mov16 #resetV : readV
 	mov #0 : runCount
 	jmp !--
 done:	pla
@@ -35,12 +35,16 @@ done:	pla
 
 .segment Code "rleUnpackImage"
 rleUnpackImage:
-	rleUnpackImage(bmb1, smb1, $d800)
+	rleUnpackImage(bmb1, smb1, $d800, bitmap, matrix, colorram, bgcolor, 13)
 	rts
 
-.macro rleUnpackImage(bmbase, mbase, rbase) {
-	lda bgcolor
-	sta $d021
+rleUnpackTitle:
+	rleUnpackImage(bmb1, smb1, $d800, t_bitmap, t_matrix, t_colorram, t_bgcolor, 25)
+	rts
+
+.macro rleUnpackImage(bmbase, mbase, rbase, bitmapr, matrixr, colorramr, bgcolorr, cols) {
+	lda bgcolorr
+	sta curbg
 	ldy #0
 	sty rrunByte
 	sty rrunCount
@@ -51,9 +55,9 @@ rleUnpackImage:
 	sty row
 	
 	// load read vectors
-	mov16 #bitmap : breadV
-	mov16 #matrix : mreadV
-	mov16 #colorram : rreadV
+	mov16 #bitmapr : breadV
+	mov16 #matrixr : mreadV
+	mov16 #colorramr : rreadV
 
 	// prepare bitmap decode
 	mov16 #bmbase : wrV2
@@ -61,7 +65,7 @@ rleUnpackImage:
 	lda #40
 	sta column
 	ldy #0
-	ldx #13
+	ldx #cols
 block:	rleNextByte(bitmap, breadV, brunCount, brunByte)
 	lda brunByte
 	sta (wrV),y
@@ -73,7 +77,7 @@ block:	rleNextByte(bitmap, breadV, brunCount, brunByte)
 	dex
 	beq !+
 	jmp block
-!:	ldx #13
+!:	ldx #cols
 	add16 wrV2 : #8 : wrV2
 	mov16 wrV2 : wrV
 	dec column
@@ -85,7 +89,7 @@ block:	rleNextByte(bitmap, breadV, brunCount, brunByte)
 	lda #40
 	sta column
 	ldy #0
-	ldx #13
+	ldx #cols
 	mov16 wrV2 : wrV
 col2:	rleNextByte(matrix, mreadV, mrunCount, mrunByte)
 	lda mrunByte
@@ -94,7 +98,7 @@ col2:	rleNextByte(matrix, mreadV, mrunCount, mrunByte)
 	dex
 	beq !+
 	jmp col2
-!:	ldx #13
+!:	ldx #cols
 	inc16 wrV2
 	mov16 wrV2 : wrV
 	dec column
@@ -107,7 +111,7 @@ col2:	rleNextByte(matrix, mreadV, mrunCount, mrunByte)
 	lda #40
 	sta column
 	ldy #0
-	ldx #13
+	ldx #cols
 col3:	rleNextByte(colorram, rreadV, rrunCount, rrunByte)
 	lda rrunByte
 	sta (wrV),y
@@ -115,7 +119,7 @@ col3:	rleNextByte(colorram, rreadV, rrunCount, rrunByte)
 	dex
 	beq !+
 	jmp col3
-!:	ldx #13
+!:	ldx #cols
 	inc16 wrV2
 	mov16 wrV2 : wrV
 	dec column

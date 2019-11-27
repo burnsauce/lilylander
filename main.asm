@@ -15,8 +15,10 @@
 #import "sid.asm"
 #import "rle.asm"
 #import "bgdata.asm"
+#import "titledata.asm"
 #import "game.asm"
 #import "frame.asm"
+#import "fontlib.asm"
 #import "init.asm"
 
 .segment Code "Main Loop"

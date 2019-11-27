@@ -2,14 +2,21 @@
 from PIL import Image, ImageDraw
 
 import argparse
+height = 13
 
 def main():
     p = argparse.ArgumentParser(
             description='Generate multiline data for C64 backgrounds')
+    p.add_argument('--prefix', default="", help="data/segment prefix")
+    p.add_argument('--height', default="13")
     p.add_argument('input')
 
     args = p.parse_args()
+    prefix = args.prefix
+    global height
+    height = int(args.height)
     im = Image.open(args.input)
+
     size = im.size
     bgcol = 0
     for y in range(im.size[1]/8):
@@ -30,7 +37,7 @@ def main():
     if od.process(im) == False:
         return
     od.compress()
-    od.printASM()
+    od.printASM(prefix)
 
 def rlencode(data):
     ret = []
@@ -57,6 +64,8 @@ def rlencode(data):
         runbyte = v
     if runcount > 1:
         ret.append(runcount)
+    if ret[-1] == 0:
+    	ret.extend([0, 1])
     ret.extend([0,0,0]) # ..0 == reset
     return ret
 
@@ -204,7 +213,7 @@ class OutputData:
         bm = []
         sm = []
         rd = []
-        height = 13
+        global height
         width = im.size[0] / 4
         for x in range(width):
             for y in range(height):
@@ -216,17 +225,17 @@ class OutputData:
         self.ramdata = rd
         return True
 
-    def printASM(self):
+    def printASM(self, prefix):
         print '.segment RLEBitmap "RLE Bitmap"'
-        print "bitmap:"
+        print "%sbitmap:" % prefix
         printBytes(self.bitmap)
         print '.segment RLEMatrix "RLE Matrix"'
-        print "matrix:"
+        print "%smatrix:" % prefix
         printBytes(self.screenmatrix)
         print '.segment RLEColor "RLE Color Ram"'
-        print "colorram:"
+        print "%scolorram:" % prefix
         printBytes(self.ramdata)
-        print "bgcolor:\t.byte", self.bgcolor
+        print "%sbgcolor:\t.byte" % prefix, self.bgcolor
 
         print "// Bitmap data size: $%04x" % len(self.bitmap)
         print "// Matrix data size: $%04x" % len(self.screenmatrix)

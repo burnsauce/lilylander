@@ -9,6 +9,9 @@
         .return CmdArgument(arg.getType(),>arg.getValue())
     .return CmdArgument(arg.getType(),arg.getValue()+1)
 }
+.function _24bitNext(arg) {
+    .return CmdArgument(arg.getType(),arg.getValue()+2)
+}
 
 .pseudocommand mov src:tar {
 mov:

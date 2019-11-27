@@ -53,6 +53,11 @@
 	sta spren
 }
 
+.macro disableSprites() {
+	lda #$00
+	sta spren
+}
+
 .macro moveSprite(num, x, y) {
 	.if (x > 255) {
 	// load the hi bit	
