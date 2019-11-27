@@ -175,12 +175,20 @@ tholding:
 startgame:	lda #0
 	sta keyheld
 	startGame()
-titledone:	dec titletmp
+titledone:	
+	lda bestscore
+	ora bestscore + 1
+	beq titlefinal
+	cmp16 score : bestscore
+	bne titlefinal
+flash:	inc lily1ramp
+	bne titlefinal
+	dec titletmp
 	bpl !+
 	lda #4
 	sta titletmp
 !:	pokeBestScoreColor(titletmp)	
-	finishISR()
+titlefinal:	finishISR()
 titletmp:	.byte 5
 *=* "frameISR"
 frameISR:
