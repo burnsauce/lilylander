@@ -1,9 +1,21 @@
-.segment Data "Quarter-Sin() table"
+.segment QSinTable	[startAfter="Zeropage", max=$00ff] "QSin Table"
+qsin:
+.fill 64, 0
+.segment InitCode "Quarter-Sin() table"
 sin_table:
 .for(var i=0; i<256/4; i++) {
 	.var sv = 128 * sin(toRadians((i / 255) * 360))
 	.byte min(max(-127, round(sv)), 127)
 }
+
+.macro initQSin() {
+	ldy #63
+!:	lda sin_table,y
+	sta qsin,y
+	dey
+	bpl !-
+}
+
 .label sint = reserve(1,0)
 .pseudocommand sin a : tar {
 	lda a
@@ -24,15 +36,15 @@ q4:	// q4: table backward, negated
 	lda #63
 	sec
 	sbc sint
-	tay
-	lda sin_table,y
+	tax
+	lda qsin,x
 	eor #$ff
 	clc
 	adc #1
 	jmp done
 	// q1: table forward
-q1:	ldy a
-	lda sin_table,y
+q1:	ldx a
+	lda qsin,x
 	jmp done
 q2:	// q2: table backward
 !:	lda a
@@ -41,14 +53,14 @@ q2:	// q2: table backward
 	lda #63
 	sec
 	sbc sint
-	tay
-	lda sin_table,y
+	tax
+	lda qsin,x
 	jmp done
 q3:	// q3: table forward, negated
 	lda a
 	and #$3f
-	tay
-	lda sin_table,y
+	tax
+	lda qsin,x
 	eor #$ff
 	clc
 	adc #1

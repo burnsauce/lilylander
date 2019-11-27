@@ -4,6 +4,9 @@ labels = {}
 rawlines = []
 import re
 
+print
+print "   Memory Allocation"
+print
 blocks = {}
 
 p = re.compile(r'  \*?\$([0-9a-f]{4})-\$([0-9a-f]{4}) (.*)')

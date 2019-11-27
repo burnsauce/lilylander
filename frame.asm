@@ -6,7 +6,7 @@
 .const DDRB	 = $dc03
 
 .const frameRaster = 251
-.const preFrameRaster = 152
+.const preFrameRaster = 158
 .const landingMargin = 24
 
 .label frspd = reserve(1,0)
@@ -27,12 +27,14 @@
 .label exec_count = reserve(1,0)
 .label copy_request = reserve(1,0)
 .label score = reserve(2,0)
-
+.label bestscore = reserve(2,0)
+.label curbg = reserve(1,0)
 .macro scankey(col) {
 	lda #((1 << col) ^ $ff)
 	sta PRA
 	lda PRB
-	cmp #$ff
+	and #%00011000
+	cmp #%00011000
 }
 
 .macro startFrame(delay) {
@@ -41,7 +43,7 @@
 	asl $d019
 	cli
 	delay(delay)
-	mov bgcolor : $d021
+	mov curbg : $d021
 }
 
 .macro switchToPreframe() {
@@ -49,6 +51,12 @@
 	setInterrupt(preFrameISR)
 	lda #preFrameRaster
 	sta $d012
+	asl $d019
+}
+
+.macro refreshPreframe() {
+	sta $d012
+	asl $d019
 }
 
 .macro animate() {
@@ -104,11 +112,12 @@ fdone:	moveLilies()
 	asl $d019
 	finishISR()
 
+.label watercolor = reserve(1, 6)
 *=* "preFrameISR"
 preFrameISR:
 	pha
 	delay(40)
-	mov #6 : $d021
+	mov watercolor : $d021
 	mov16 nextFrameISR : $fffe
 	lda #frameRaster
 	sta $d012
@@ -142,6 +151,37 @@ ph3ani:	pushFrogRight(frspd)
 	pushFrogDown(3)
 	jmp finishFrame
 
+*=* "titleISR"
+titleISR:	startISR()
+	lda t_bgcolor
+	sta BG0COL
+	lda #$ff
+	sta DDRA
+	lda #0
+	sta DDRB
+	scankey(7)
+	beq !+
+	jmp tholding
+!:	lda keyheld
+	bne startgame 
+	jmp titledone
+tholding:
+	lda keyheld
+	beq !+
+	jmp titledone
+!:	lda #1
+	sta keyheld
+	jmp titledone
+startgame:	lda #0
+	sta keyheld
+	startGame()
+titledone:	dec titletmp
+	bpl !+
+	lda #4
+	sta titletmp
+!:	pokeBestScoreColor(titletmp)	
+	finishISR()
+titletmp:	.byte 5
 *=* "frameISR"
 frameISR:
 	// GAME LOGIC
@@ -151,10 +191,12 @@ frameISR:
 	cmp #$02
 	bcs !+
 	jmp skip
-!:	lda copy_request
+!:
+	lda copy_request
 	beq !+
 	jmp skip
-!:	lda keyheld
+!:	
+	lda keyheld
 	bne !+
 	lda jumping
 	beq !+
@@ -290,7 +332,23 @@ hit:	mov16 #finishFrame : aniptr
 	getfrogpos ftmp 
 	sub16 ftmp : #60 : scrolling
 	add16 score : scrolling : score
-	mov16 #0 : lily1ramp
+	sec
+	lda bestscore + 1
+	sbc score + 1
+	bcc newbest
+	bne !+
+	lda bestscore
+	sbc score
+	bcs !+
+newbest:	mov16 score : bestscore
+!:	mov #0 : lily1ramp + 1
+	mov $d41b : lily1ramp
+	asl lily1ramp
+	rol lily1ramp + 1
+	asl lily1ramp
+	rol lily1ramp + 1
+	asl lily1ramp
+	rol lily1ramp + 1
 	lda #$80
 	ora scrolling + 1
 	sta scrolling + 1
@@ -302,6 +360,37 @@ hit:	mov16 #finishFrame : aniptr
 
 skip:	dec exec_count
 	finishISR()
+
+
+
+.label rand = reserve(1,%10011101)
+.label rand_hi = reserve(1,%01011011)
+.label rand_t = reserve(1,0)
+
+.pseudocommand rnd16 tar {
+	lda rand_hi
+	sta rand_t
+	asl 
+	rol rand_t
+	asl 
+	rol rand_t
+	clc
+	adc rand
+	pha
+	lda rand_t
+	adc rand_hi
+	sta rand_hi
+	pla
+	adc #$11
+	sta rand
+	lda rand_hi
+	adc #$36
+	sta rand_hi
+	sta _16bitNext(tar)
+	lda rand
+	sta tar
+}
+
 
 .label waiting = reserve(1,0)
 
@@ -338,7 +427,8 @@ chkcopy:	lda copy_request
 	lda #0
 	sta waiting
 	mov #15 : secondsc
-	mov16 #0 : lily1ramp
+	rnd16 lily1ramp
+	// blank the display
 	lda #%11101111
 	and $d011
 	sta $d011
@@ -349,29 +439,7 @@ chkcopy:	lda copy_request
 	and #%11111100
 	ora #2
 	sta $dd00
-	jsr rleUnpackImage
-	jsr copyDblBitmap
-	jsr copyDblMatrix
-	jsr copyDblRam	
-
-	initFrog()
-	mov #7 : xscroll
-	lda #$f8
-	and $d016
-	ora xscroll
-	sta $d016
-	mov #0 : level
-	lda #%00010000
-	ora $d011
-	sta $d011
-	.break
-	mov16 #finishFrame : aniptr
-	mov16 #frameISR : nextFrameISR
-	lda #preFrameRaster
-	sta $d012
-	lda #$7f
-	and $d011
-	sta $d011
+	showTitle()
 	jmp finishFrame
 
 * = * "Landed Handler"
@@ -402,8 +470,15 @@ chklo:	lda scrolling
 	jmp finishFrame
 complete:	
 	mov16 #frameISR : nextFrameISR
+	rnd16 lily1ramp
 	inc level
-	lda #0
+	lda #31
+	and level
+	sta level
+	//bne !+
+	// Win condition?
+	//inc watercolor
+!:	lda #0
 	sta keyheld
 	SIDgate(1, 0)
 	initFrog()

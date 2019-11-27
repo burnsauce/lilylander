@@ -14,6 +14,7 @@ init:
 	initZeroPage()
 	initDblBuf()
 	initFrame()
+	initQSin()
 
 	copySprites()
 	jsr copyDblBitmap
@@ -24,48 +25,92 @@ init:
 	// wait for high raster
 !:	lda $d011
 	bpl !-
-	// enable display
-	//ora #1 << 4
-	//and #$7f
-	//sta $d011
 	// enable interrupt
 	lda #1
 	sta $d01a
 	jmp ready 
 
 .macro initFrame() {
-	// clear raster hi bit
-	// turn off the display
-	// half V scroll
-	lda #%00110111
-	sta $d011
-
-	// set the raster interrupt line
-	lda #frameRaster
-	sta $d012
-
-	// multicolor
-	// 40 col
-	// full H scroll
-	lda #%00010111
-	sta $d016
-	lda #$f
-	sta xscroll
 
 	// bits 4-7 are for matrix offset
 	// bits 1-3 are for bitmap
 	lda #%00001000
 	sta $d018
+	showTitle()
+}
 
-	//rleUnpackImage(bmb1, smb1, $d800)
+.macro showTitle() {
+	disableSprites()
+	lda #%11101111
+	and $d011
+	sta $d011
+	lda t_bgcolor
+	sta BG0COL
+	// clear raster hi bit
+	// full V scroll
+	lda #%00100111
+	sta $d011
+	// multicolor
+	// 38 col
+	// no H scroll
+	lda #%00010000
+	sta $d016
+	jsr rleUnpackTitle
+	writeScore()
+	// set the raster interrupt line
+	lda #frameRaster
+	sta $d012
+	mov16 #finishFrame : aniptr
+	mov16 #frameISR : nextFrameISR
+	lda #frameRaster
+	sta $d012
+	setInterrupt(titleISR)
+	lda #%00110111
+	sta $d011
+
+}
+	
+.macro startGame() {
+	// multicolor
+	// 38 col
+	// full H scroll
+	lda #%00010111
+	sta $d016
+	lda #%00100111
+	sta $d011
 	jsr rleUnpackImage
+	jsr copyDblBitmap
+	jsr copyDblMatrix
+	jsr copyDblRam	
 	zeroMem(bmb2 + 13 * 8 * 40, 12 * 8 * 40)
 	zeroMem(smb2 + 13 * 40, 12 * 40)
 	zeroMem($d800 + 13 * 40, 12 * 40)
+	zeroMem(bmb1 + 13 * 8 * 40, 12 * 8 * 40)
+	zeroMem(smb1 + 13 * 40, 12 * 40)
+	zeroMem(rmb + 13 * 40, 12 * 40)
+	
+	lda #%00010000
+	sta $d016
 	initFrog()
+	mov #7 : xscroll
+	lda #$f8
+	and $d016
+	ora xscroll
+	sta $d016
+	mov #0 : level
+	mov #6 : watercolor
+	mov16 #0 : score
+	
+	
 	initLily()
 	mov16 #finishFrame : aniptr
-	setInterrupt(frameISR)
+	mov16 #frameISR : nextFrameISR
+	// set the raster interrupt line
+	lda #preFrameRaster
+	sta $d012
+	setInterrupt(preFrameISR)
+	lda #%00110111
+	sta $d011
 }
 
 .macro initDblBuf() {
