@@ -8,9 +8,11 @@ init:
 	lda #0
 	sta $d01a
 	// disable BASIC and KERNAL
-	lda #$35
+	lda #29
 	sta $01
 
+	lda #6
+	sta $d020
 	initZeroPage()
 	initDblBuf()
 	initFrame()
@@ -53,7 +55,7 @@ init:
 	// multicolor
 	// 38 col
 	// no H scroll
-	lda #%00010000
+	lda #%00010001
 	sta $d016
 	jsr rleUnpackTitle
 	writeScore()

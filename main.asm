@@ -9,6 +9,7 @@
 .segment Code
 #import "common.asm"
 #import "zeropage.asm"
+#import "config.asm"
 #import "unroll.asm"
 #import "dblbuf.asm"
 #import "sprlib.asm"

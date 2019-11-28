@@ -5,9 +5,6 @@
 .const PRB	 = $dc01
 .const DDRB	 = $dc03
 
-.const frameRaster = 251
-.const preFrameRaster = 158
-.const landingMargin = 24
 
 .label frspd = reserve(1,0)
 .label frdiv = reserve(1,12)
@@ -163,6 +160,8 @@ ph3ani:	pushFrogRight(frspd)
 titleISR:	startISR()
 	lda t_bgcolor
 	sta BG0COL
+	lda #6
+	sta $d020
 	lda #$ff
 	sta DDRA
 	lda #0
