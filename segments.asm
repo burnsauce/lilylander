@@ -15,8 +15,9 @@ sprp1: .fill 8,0
 sprbank1:
 #import "sprites.asm"
 .segment ColorBuffer 	[startAfter="Sprites1", align=$100, virtual]
-rmb: .fill 13 * 40, 0
-.segmentdef InitCode 	[startAfter="Sprites1", modify="BasicUpstart", _start=init, align=$100]
+rmb: .fill 25 * 40, 0
+.segmentdef InitCode 	[startAfter="Sprites1", modify="BasicUpstart", _start=init]
+.segmentdef Code2 	[startAfter="InitCode"]
 .segment BitmapBuf	[start=$6000, min=$6000, max=$7f3f, virtual, fill]
 bmb1: .fill $1f40, 0
 .segmentdef RLEBitmap	[startAfter="BitmapBuf"]
@@ -31,4 +32,4 @@ sprbank2:
 .segment BitmapBuf2	[start=$e000, min=$e000, max=$ff40, virtual, fill]
 bmb2: .fill $1f40, 0
 
-.file [name="ll.prg", segments="Code,Data,InitCode,Sprites1,RLEBitmap,RLEMatrix,RLEColor"]
+.file [name="ll.prg", segments="Code,Code2,Data,InitCode,Sprites1,RLEBitmap,RLEMatrix,RLEColor"]

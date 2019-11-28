@@ -72,13 +72,16 @@ init:
 }
 	
 .macro startGame() {
+	// blank screen
+	lda #%00100111
+	sta $d011
 	// multicolor
 	// 38 col
 	// full H scroll
+!:	lda RASTER - 1
+	bpl !-
 	lda #%00010111
 	sta $d016
-	lda #%00100111
-	sta $d011
 	jsr rleUnpackImage
 	jsr copyDblBitmap
 	jsr copyDblMatrix
@@ -93,6 +96,7 @@ init:
 	lda #%00010000
 	sta $d016
 	initFrog()
+	initLily()
 	mov #7 : xscroll
 	lda #$f8
 	and $d016

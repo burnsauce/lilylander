@@ -125,7 +125,7 @@ preFrameISR:
 	pla; rti
 
 *=* "Animation Handlers"
-
+.label frogt = reserve(1,0)
 ph1ani:	pushFrogRight(frspd)
 	pushFrogUp(3)
 	lda #$02
@@ -141,14 +141,22 @@ ph2ani:	pushFrogRight(frspd)
 	sbc phcount
 	bcs frogdown
 	pushFrogUp(2)
-	jmp ph2ani1
+	inc frogt
+	inc frogt
+	jmp finishFrame
 frogdown:
 	pushFrogDown(2)
-ph2ani1:
+	dec frogt
+	dec frogt
 	jmp finishFrame
 
 ph3ani:	pushFrogRight(frspd)
 	pushFrogDown(3)
+	lda frogt
+	bne !+
+	jmp finishFrame
+!:	pushFrogDown(1)
+	dec frogt
 	jmp finishFrame
 
 *=* "titleISR"
@@ -190,6 +198,7 @@ flash:	inc lily1ramp
 !:	pokeBestScoreColor(titletmp)	
 titlefinal:	finishISR()
 titletmp:	.byte 5
+
 *=* "frameISR"
 frameISR:
 	// GAME LOGIC
@@ -228,10 +237,11 @@ jumpnow:
 	lsr
 	lsr
 	lsr
+	lsr
 	clc
-	adc #2
+	adc #2 
 	sta frspd
-	lda #12
+	lda #10
 	sta frdiv
 	lda #0
 	sta keyheld
@@ -243,16 +253,13 @@ holding:
 	jmpsound()
 	lda #1
 	sta keyheld
-!:	lda powerLevel
-	cmp #80
-	bpl !+
-	updatePower()
-	lda #$F0
+!:	updatePower()
+	lda powerLevel
+	lsr
+	lsr
 	clc
-	adc cfreq
-	sta cfreq
-	bcc !+
-	inc cfreq + 1
+	adc #8
+	sta cfreq + 1
 	SIDfreqd(1, cfreq)
 !:	animate()
 skipkey:
@@ -271,7 +278,7 @@ ph1:	jmpsound()
 	loadSprite(frogj1, 0)
 	loadSprite(frogj2, 1)
 	loadSprite(frogj3, 2)
-	loadSprite(blank, 3)
+	disableSprite(3)
 	enableSprite(6)
 	enableSprite(7)
 	loadSprite(lilys11, 6)
@@ -284,8 +291,7 @@ ph2:	cmp #2
 !:	jmpstop()
 	loadSprite(frogs1, 0)
 	loadSprite(frogs2, 1)
-	loadSprite(blank, 2)
-	loadSprite(blank, 3)
+	disableSprite(2)
 	loadSprite(lilys21, 6)
 	loadSprite(lilys22, 7)
 	mov16 #ph2ani : aniptr
@@ -299,6 +305,8 @@ ph3:	cmp #3
 	loadSprite(frogf4, 3)
 	loadSprite(lilys31, 6)
 	loadSprite(lilys32, 7)
+	enableSprite(2)
+	enableSprite(3)
 	mov16 #ph3ani : aniptr
 	animate()
 ph0:	lda #0
@@ -311,8 +319,8 @@ ph0:	lda #0
 	sec
 	lda $d006 // frog
 	sbc $d00a // lily
-	clc
-	adc #[landingMargin / 2]
+	//clc
+	//adc #[landingMargin / 2]
 	bpl gotabs
 	eor #$ff
 	clc
@@ -322,8 +330,20 @@ gotabs:	cmp #landingMargin
 	jmp hit
 
 miss:	mov16 #missed : nextFrameISR
+	sec
+	lda bestscore + 1
+	sbc score + 1
+	bcc newbest
+	bne !+
+	lda bestscore
+	sbc score
+	bcs !+
+newbest:	mov16 score : bestscore
+!:
 	mov #0 : seconds
 	mov #15 : secondsc
+	mov #0 : powerLevel
+	mov #0 : powerdir
 	SIDfreq(1, $0F00)
 	SIDgate(1, 1)
 	pushFrogDown(11)
@@ -335,6 +355,8 @@ miss:	mov16 #missed : nextFrameISR
 	jmp finishFrame
 
 hit:	mov16 #finishFrame : aniptr
+	mov #0 : powerLevel
+	mov #0 : powerdir
 	disableSprite(4)
 	disableSprite(5)
 	loadSprite(frogl1, 0)
@@ -342,27 +364,11 @@ hit:	mov16 #finishFrame : aniptr
 	loadSprite(frogl3, 2)
 	loadSprite(frogl4, 3)
 	mov16 #landed : nextFrameISR
+	rnd16 lily1ramp
 	// set scrolling amount to d - 60
 	getfrogpos ftmp 
 	sub16 ftmp : #60 : scrolling
 	add16 score : scrolling : score
-	sec
-	lda bestscore + 1
-	sbc score + 1
-	bcc newbest
-	bne !+
-	lda bestscore
-	sbc score
-	bcs !+
-newbest:	mov16 score : bestscore
-!:	mov #0 : lily1ramp + 1
-	mov $d41b : lily1ramp
-	asl lily1ramp
-	rol lily1ramp + 1
-	asl lily1ramp
-	rol lily1ramp + 1
-	asl lily1ramp
-	rol lily1ramp + 1
 	lda #$80
 	ora scrolling + 1
 	sta scrolling + 1
@@ -470,14 +476,14 @@ chkcopy:	lda copy_request
 landed:	startFrame(0)
 	dec secondsc
 	beq !+
-	jmp lks
+	jmp chkscrol
 !:	mov #15 : secondsc
 	inc seconds
 	lda seconds
 	cmp #1
 	beq hitone
 	SIDgate(1, 0)
-	jmp lks
+	jmp ltwo 
 hitone:	SIDfreq(1, $1E00)
 	disableSprite(6)
 	disableSprite(7)
@@ -485,18 +491,47 @@ hitone:	SIDfreq(1, $1E00)
 	loadSprite(frog2, 1)
 	loadSprite(frog3, 2)
 	loadSprite(frog4, 3)
-lks:	lda scrolling + 1
+	jmp finishFrame
+ltwo:	
+	getfrogpos ftmp 
+	lda ftmp + 1
+	beq !+
+	dec seconds
+	jmp finishFrame
+!:	lda ftmp
+	cmp #80
+	bcc !+
+	dec seconds
+	jmp finishFrame
+!:	ldy #8
+	sty secondsc
+	moveLilies()
+	lda seconds
+	cmp #2
+	beq !+
+	jmp lthree
+!:	loadSprite(lilyunf1, 4)
+	jmp finishFrame
+lthree:	cmp #3
+	beq !+
+	jmp lfour
+!:	loadSprite(lilyunf21, 4)
+	loadSprite(lilyunf22, 5)
+	jmp finishFrame
+lfour:	loadSprite(lilyunf31, 4)
+	loadSprite(lilyunf32, 5)
+	jmp finishFrame
+chkscrol:	lda scrolling + 1
 	and #$7f
 	beq chklo
 	jmp finishFrame
 chklo:	lda scrolling
 	beq complete
 	jmp finishFrame
-complete:	
+complete:	initLily()
 	mov16 #frameISR : nextFrameISR
-	rnd16 lily1ramp
 	inc level
-	lda #31
+	lda #63
 	and level
 	sta level
 	//bne !+

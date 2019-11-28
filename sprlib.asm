@@ -30,6 +30,10 @@
 	lda #(1 << num) 
 	ora sprmc
 	sta sprmc
+	jmp !++
+!:	lda #(1 << num) ^ $ff
+	and sprmc
+	sta sprmc
 !:	lda lsarg
 	and #$0F // color
 	sta sprcolor + num
@@ -77,10 +81,23 @@
 
 .macro pushFrogRight(amt) {
 	lda scrollamt
-	beq !+
-	dec $d000
+	beq addamt
+	lda $d000
+	bne !+
+	lda #$fa
+	and $d010
+	sta $d010
+!:	dec $d000
+	lda $d002
+	bne !+
+	lda #$f5
+	and $d010
+	sta $d010
+!:	dec $d002
 	dec scrollamt
-!:	lda $d000
+addamt:
+
+	lda $d000
 	clc
 	adc amt
 foundhi:	sta $d000
@@ -90,6 +107,7 @@ foundhi:	sta $d000
 	ora sprxhi
 	sta sprxhi
 pfr1:	lda $d002
+	clc
 	adc amt
 foundhi1:	sta $d002
 	sta $d006

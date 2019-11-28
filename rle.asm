@@ -32,12 +32,12 @@ done:	pla
 	tax
 
 }
-
-.segment Code "rleUnpackImage"
+.segment Code2 "rleUnpackImage"
 rleUnpackImage:
 	rleUnpackImage(bmb1, smb1, $d800, bitmap, matrix, colorram, bgcolor, 13)
 	rts
 
+.segment Code2 "rleUnpackTitle"
 rleUnpackTitle:
 	rleUnpackImage(bmb1, smb1, $d800, t_bitmap, t_matrix, t_colorram, t_bgcolor, 25)
 	rts

@@ -33,8 +33,19 @@
 	SIDgate(1, 0)
 }
 
+.label powerdir = reserve(1,0)
 .macro updatePower() {
+	lda powerdir
+	bne down
 	inc powerLevel
+	inc powerLevel
+	bne powdone
+	inc powerdir
+down:	dec powerLevel
+	dec powerLevel
+	bne powdone
+	dec powerdir
+powdone:	
 }
 
 .macro resetPower() {
@@ -44,9 +55,9 @@
 
 .macro initLily() {
 	loadSprite(lily1, 4)
-	moveSprite(4, 0, 214)
+	moveSprite(4, 0, 216)
 	loadSprite(lily2, 5)
-	moveSprite(5, 0, 214)
+	moveSprite(5, 0, 216)
 }
 
 .macro initFrog() {
@@ -75,7 +86,7 @@
 
 .segment Data "Level Data"
 leveldata:
-.for(var i=0; i<32;i++) {
+.for(var i=0; i<64;i++) {
 	.word (i + 1) * $28
 }
 
@@ -84,12 +95,18 @@ leveldata:
 .label frogramp = reserve(2,0)
 
 .macro scrollsprite(num) {
-	lda $d000 + num * 2
-	bne lo
+chklo:	lda $d000 + num * 2
+	beq chkhi
+!:	dec $d000 + num * 2
+	jmp scrldone
+chkhi:	lda #(1 << num)
+	and $d010
+	beq scrldone
 	lda #$ff ^ (1 << num)
 	and $d010
 	sta $d010
-lo:	dec $d000 + num * 2
+	jmp !-
+scrldone:
 }
 
 .macro moveLilies() {
