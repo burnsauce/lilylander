@@ -28,6 +28,8 @@ sprp2: .fill 8,0
 .segment Sprites2	[startAfter="SprPtrs2", virtual]
 sprbank2:
 		.fill sprsize, 0
+.segment D000_IO	[start=$d000, min=$d000, max=$dfff, virtual]
+.fill $1000, 0
 
 .segment BitmapBuf2	[start=$e000, min=$e000, max=$ff40, virtual, fill]
 bmb2: .fill $1f40, 0
