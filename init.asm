@@ -96,6 +96,16 @@ init:
 	lda #%00010000
 	sta $d016
 	initFrog()
+	mov #7 : xscroll
+	lda #$f8
+	and $d016
+	ora xscroll
+	sta $d016
+	mov #0 : level
+	mov #6 : watercolor
+	mov16 #0 : score
+	
+	
 	initLily()
 	mov #7 : xscroll
 	lda #$f8

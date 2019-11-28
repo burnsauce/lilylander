@@ -199,6 +199,37 @@ flash:	inc lily1ramp
 titlefinal:	finishISR()
 titletmp:	.byte 5
 
+*=* "titleISR"
+titleISR:	startISR()
+	lda t_bgcolor
+	sta BG0COL
+	lda #$ff
+	sta DDRA
+	lda #0
+	sta DDRB
+	scankey(7)
+	beq !+
+	jmp tholding
+!:	lda keyheld
+	bne startgame 
+	jmp titledone
+tholding:
+	lda keyheld
+	beq !+
+	jmp titledone
+!:	lda #1
+	sta keyheld
+	jmp titledone
+startgame:	lda #0
+	sta keyheld
+	startGame()
+titledone:	dec titletmp
+	bpl !+
+	lda #4
+	sta titletmp
+!:	pokeBestScoreColor(titletmp)	
+	finishISR()
+titletmp:	.byte 5
 *=* "frameISR"
 frameISR:
 	// GAME LOGIC
@@ -530,6 +561,7 @@ chklo:	lda scrolling
 	jmp finishFrame
 complete:	initLily()
 	mov16 #frameISR : nextFrameISR
+	rnd16 lily1ramp
 	inc level
 	lda #63
 	and level
