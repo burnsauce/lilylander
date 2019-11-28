@@ -182,7 +182,6 @@ nextbit:	asl val
 }
 
 .macro pokeBestScoreColor(col) {
-	.break
 	mov16 #$d800 + 21 * 40 + 31 : fontp
 	ldy col
 	lda (fontp),y
@@ -190,4 +189,23 @@ nextbit:	asl val
 	clc
 	adc #1
 	sta (fontp),y
+}
+
+.macro setScoreColors(col) {
+	mov16 #$d800 + 21 * 40 + 31 : fontp
+	lda #col
+	ldy #5
+!:	dey
+	bmi !+
+	sta (fontp),y
+	jmp !-
+!:
+	mov16 #$d800 + 22 * 40 + 31 : fontp
+	lda #col
+	ldy #5
+!:	dey
+	bmi !+
+	sta (fontp),y
+	jmp !-
+!:
 }

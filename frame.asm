@@ -326,7 +326,13 @@ miss:	mov16 #missed : nextFrameISR
 	mov #15 : secondsc
 	SIDfreq(1, $0F00)
 	SIDgate(1, 1)
-	animate()
+	pushFrogDown(11)
+	loadSprite(frogdie11, 0)
+	loadSprite(frogdie12, 1)
+	loadSprite(frogdie13, 2)
+	loadSprite(frogdie14, 3)
+	mov16 #finishFrame : aniptr
+	jmp finishFrame
 
 hit:	mov16 #finishFrame : aniptr
 	disableSprite(4)
@@ -418,19 +424,29 @@ missed:	startFrame(0)
 	SIDgate(1, 0)
 	jmp wait1more
 lotone:	SIDfreq(1, $0780)
+	mov16 #finishFrame : aniptr
 	disableSprite(6)
 	disableSprite(7)
-	animate()
+	loadSprite(frogdie21, 0)
+	loadSprite(frogdie22, 1)
+	loadSprite(frogdie23, 2)
+	loadSprite(frogdie24, 3)
+	jmp finishFrame
 wait1more:	lda seconds
-	cmp #3
-	bne !+
-	animate()
-!:	mov16 #finishFrame : aniptr
+	cmp #2
+	beq !+
+	jmp chkcopy
+!:	
+	loadSprite(frogdie31, 0)
+	loadSprite(frogdie32, 1)
+	loadSprite(frogdie33, 2)
+	loadSprite(frogdie34, 3)
+	jmp finishFrame
 chkcopy:	lda copy_request
 	beq !+
 	lda #1
 	sta waiting
-	animate()
+	jmp finishFrame
 !:	sei
 	lda #0
 	sta waiting

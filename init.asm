@@ -57,6 +57,7 @@ init:
 	sta $d016
 	jsr rleUnpackTitle
 	writeScore()
+	setScoreColors(6)
 	// set the raster interrupt line
 	lda #frameRaster
 	sta $d012
