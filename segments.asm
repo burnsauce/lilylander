@@ -4,7 +4,7 @@
 doColorRamCopy:
 .fill 13 * 40 * 6 + 1,0
 .segmentdef Code 	[startAfter="CopyCode"]
-.segmentdef Data 	[startAfter="Code"]
+.segmentdef Data 	[startAfter="Code", max=$3fff]
 .segmentdef RLEMatrix	[startAfter="Data"]
 .segmentdef RLEColor	[startAfter="RLEMatrix"]
 .segment MatrixBuf	[start=$4000, min=$4000, max=$43f7, virtual, fill]
@@ -18,6 +18,7 @@ sprbank1:
 rmb: .fill 25 * 40, 0
 .segmentdef InitCode 	[startAfter="Sprites1", modify="BasicUpstart", _start=init]
 .segmentdef Code2 	[startAfter="InitCode"]
+.segmentdef Data2 	[startAfter="Code2"]
 .segment BitmapBuf	[start=$6000, min=$6000, max=$7f3f, virtual, fill]
 bmb1: .fill $1f40, 0
 .segmentdef RLEBitmap	[startAfter="BitmapBuf"]
@@ -32,4 +33,4 @@ sprbank2:
 .segment BitmapBuf2	[start=$e000, min=$e000, max=$ff40, virtual, fill]
 bmb2: .fill $1f40, 0
 
-.file [name="ll.prg", segments="Code,Code2,Data,InitCode,Sprites1,RLEBitmap,RLEMatrix,RLEColor"]
+.file [name="ll.prg", segments="Code,Code2,Data,Data2,InitCode,Sprites1,RLEBitmap,RLEMatrix,RLEColor"]

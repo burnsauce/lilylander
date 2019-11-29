@@ -101,34 +101,22 @@ init:
 	zeroMem(bmb1 + 13 * 8 * 40, 12 * 8 * 40)
 	zeroMem(smb1 + 13 * 40, 12 * 40)
 	zeroMem(rmb + 13 * 40, 12 * 40)
+	mov #7 : xscroll
+	lda #%00010000
+	ora xscroll
+	sta $d016
+	mov16 #0 : score
+	sta lastscore
+	sta lastscore + 1
+	sta level
+	
 	SIDtri(SFX_CHAN)	
 	SIDgate(SFX_CHAN, 0)
 	SIDadsr(SFX_CHAN, 2, 0, $f, 2) 
-	lda #%00010000
-	sta $d016
 	initFrog()
-	mov #7 : xscroll
-	lda #$f8
-	and $d016
-	ora xscroll
-	sta $d016
-	mov #0 : level
-	mov #6 : watercolor
-	mov16 #0 : score
-	
-	
 	initLily()
-	mov #7 : xscroll
-	lda #$f8
-	and $d016
-	ora xscroll
-	sta $d016
-	mov #0 : level
-	mov #6 : watercolor
-	mov16 #0 : score
 	
-	
-	initLily()
+
 	mov16 #finishFrame : aniptr
 	mov16 #frameISR : nextFrameISR
 	// set the raster interrupt line

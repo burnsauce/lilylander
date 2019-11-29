@@ -29,7 +29,7 @@ RASIRQ:		.byte 0
 RASIE:		.byte 0
 SPRPRI:		.byte 0
 SPRMC:		.byte 0
-SPRXX:		.byte 0
+SPRXEX:		.byte 0
 SPRSPRC:	.byte 0
 SPRDATAC:	.byte 0
 BORDERC:	.byte 0

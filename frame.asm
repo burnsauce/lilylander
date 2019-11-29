@@ -108,11 +108,10 @@ fdone:	moveLilies()
 	asl $d019
 	finishISR()
 
-.label watercolor = reserve(1, 6)
 preFrameISR:
 	pha
 	delay(40)
-	mov watercolor : $d021
+	mov #6 : $d021
 	mov16 nextFrameISR : $fffe
 	lda #frameRaster
 	sta $d012
@@ -246,7 +245,6 @@ jumpnow:
 	sta frdiv
 	lda #0
 	sta keyheld
-	//lda powerLevel // ???
 	jmp skipkey
 holding:
 	lda keyheld
@@ -314,7 +312,6 @@ ph0:	lda #0
 	sta phase
 	sta jumping
 	sta keyheld
-	resetPower()
 	loadSprite(lilys41, 6)
 	loadSprite(lilys42, 7)
 	sec
@@ -358,8 +355,6 @@ newbest:	mov16 score : bestscore
 	jmp finishFrame
 
 hit:	mov16 #finishFrame : aniptr
-	mov #0 : powerLevel
-	mov #0 : powerdir
 	disableSprite(4)
 	disableSprite(5)
 	loadSprite(frogl1, 0)
@@ -371,11 +366,37 @@ hit:	mov16 #finishFrame : aniptr
 	// set scrolling amount to d - 60
 	getfrogpos ftmp 
 	sub16 ftmp : #60 : scrolling
-	add16 score : scrolling : score
 	lda #$80
 	ora scrolling + 1
 	sta scrolling + 1
-	mov #0 : seconds
+
+	// score calc
+	lda powerLevel
+	sec
+	sbc #50
+	lsr
+	clc
+	adc score
+	sta score
+	bcc !+
+	lda score + 1
+	adc #0
+	sta score + 1
+!:	lda level
+	asl
+	tay
+	mov16 leveldata,y : ftmp
+	clc
+	ror ftmp + 1
+	ror ftmp
+	clc
+	ror ftmp + 1
+	ror ftmp
+	add16 ftmp : score : score
+
+	mov #0 : powerLevel
+	sta powerdir
+	sta seconds
 	mov #15 : secondsc
 	SIDfreq(SFX_CHAN, $0F00)
 	SIDgate(SFX_CHAN, 1)
@@ -475,8 +496,13 @@ chkcopy:	lda copy_request
 	jmp finishFrame
 
 landed:	startFrame(0)
-	.break
-	dec secondsc
+	lda seconds
+	beq !+
+	lda $d001 + (6 * 2)
+	beq !+
+	dec $d001 + (6 * 2)
+	dec $d001 + (6 * 2)
+!:	dec secondsc
 	beq !+
 	jmp chkscrol
 !:	mov #15 : secondsc
@@ -487,12 +513,38 @@ landed:	startFrame(0)
 	SIDgate(SFX_CHAN, 0)
 	jmp ltwo 
 hitone:	SIDfreq(SFX_CHAN, $1E00)
-	disableSprite(6)
+	paintScore()
+	loadSprite(canvas1, 6)
+	lda #(1<<6)
+	ora SPRYEX
+	sta SPRYEX
+	lda #(1<<6)
+	ora SPRXEX
+	sta SPRXEX
+	mov #180 : $d001 + (6 * 2)
+	lda #1
+	and $d010
+	beq !+
+	lda #(1<<6)
+	ora $d010
+	sta $d010
+	jmp !++
+!:	lda #(1<<6) ^ $ff
+	and $d010
+	sta $d010
+!:	mov $d000 : $d000 + (6 * 2)
+	//disableSprite(6)
 	disableSprite(7)
 	loadSprite(frog1, 0)
 	loadSprite(frog2, 1)
 	loadSprite(frog3, 2)
 	loadSprite(frog4, 3)
+	inc level
+	lda #63
+	and level
+	sta level
+	//bne !+
+	// Win condition?
 	jmp finishFrame
 ltwo:	
 	getfrogpos ftmp 
@@ -532,13 +584,6 @@ chklo:	lda scrolling
 	jmp finishFrame
 complete:	initLily()
 	mov16 #frameISR : nextFrameISR
-	inc level
-	lda #63
-	and level
-	sta level
-	//bne !+
-	// Win condition?
-	//inc watercolor
 !:	lda #0
 	sta keyheld
 	SIDgate(SFX_CHAN, 0)

@@ -1,4 +1,4 @@
-.segment Data "Font Data"
+.segment Data2 "Font Data"
 #import "font.asm"
 .segment Code 
 

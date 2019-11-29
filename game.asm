@@ -47,16 +47,14 @@ down:	dec powerLevel
 powdone:	
 }
 
-.macro resetPower() {
-	lda #0
-	sta powerLevel
-}
-
 .macro initLily() {
 	loadSprite(lily1, 4)
 	moveSprite(4, 0, 216)
 	loadSprite(lily2, 5)
 	moveSprite(5, 0, 216)
+	lda #0
+	sta SPRYEX
+	sta SPRXEX
 }
 
 .macro initFrog() {
@@ -83,10 +81,10 @@ powdone:
 	setSpriteMC(5, 13)
 }
 
-.segment Data "Level Data"
+.segment Data2 "Level Data"
 leveldata:
 .for(var i=0; i<64;i++) {
-	.word (i + 1) * $28
+	.word (log(i/64 * 8.75 + 1.25) * MAX_SPEED)
 }
 
 .segment Code
@@ -120,9 +118,7 @@ scrldone:
 	scrollsprite(7)
 	dec scrollamt
 	// update lily1 (target lily)
-movelily:	ldy level
-	iny
-	tya
+movelily:	lda level
 	asl
 	tay
 	add16 leveldata,y : lily1ramp : lily1ramp

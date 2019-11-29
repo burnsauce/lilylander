@@ -20,6 +20,7 @@
 #import "game.asm"
 #import "frame.asm"
 #import "fontlib.asm"
+#import "canvas.asm"
 #import "init.asm"
 
 .segment Code "Main Loop"
