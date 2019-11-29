@@ -1,7 +1,7 @@
 .segment QSinTable	[startAfter="Zeropage", max=$00ff] "QSin Table"
 qsin:
 .fill 64, 0
-.segment InitCode "Quarter-Sin() table"
+.segment Data "Quarter-Sin() table"
 sin_table:
 .for(var i=0; i<256/4; i++) {
 	.var sv = 128 * sin(toRadians((i / 255) * 360))
@@ -37,14 +37,14 @@ q4:	// q4: table backward, negated
 	sec
 	sbc sint
 	tax
-	lda qsin,x
+	lda.zpx qsin
 	eor #$ff
 	clc
 	adc #1
 	jmp done
 	// q1: table forward
 q1:	ldx a
-	lda qsin,x
+	lda.zpx qsin
 	jmp done
 q2:	// q2: table backward
 !:	lda a
@@ -54,13 +54,13 @@ q2:	// q2: table backward
 	sec
 	sbc sint
 	tax
-	lda qsin,x
+	lda.zpx qsin
 	jmp done
 q3:	// q3: table forward, negated
 	lda a
 	and #$3f
 	tax
-	lda qsin,x
+	lda.zpx qsin
 	eor #$ff
 	clc
 	adc #1

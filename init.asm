@@ -17,8 +17,14 @@ init:
 	initDblBuf()
 	initFrame()
 	initQSin()
+	
+	lda #1
+	sta $01
 
 	copySprites()
+
+	lda #29
+	sta $01
 	jsr copyDblBitmap
 	jsr copyDblMatrix
 
