@@ -2,7 +2,6 @@
 *.txt
 *.sym
 *.vs
-*.gif
 KickAss.jar
 *.d64
 font.asm
