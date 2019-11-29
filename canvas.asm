@@ -9,7 +9,9 @@
 	asl
 	asl
 	asl
-	sta fontt
+	bne !+
+	jmp second
+!:	sta fontt
 	add16 #hrfont_numerals : fontt : fontp 
 	ldy #0
 .for(var i=0; i<5; i++) {
@@ -17,6 +19,7 @@
 	iny
 	sta canvas + i * 3
 }
+second:
 	lda bcdbuf
 	and #$f0
 	lsr	

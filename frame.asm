@@ -39,7 +39,6 @@
 	asl $d019
 	cli
 	delay(delay)
-	mov curbg : $d021
 }
 
 .macro switchToPreframe() {
@@ -51,7 +50,11 @@
 }
 
 .macro refreshPreframe() {
+	lda #preFrameRaster
 	sta $d012
+	lda #$7f
+	and $d011
+	sta $d011
 	asl $d019
 }
 
@@ -105,6 +108,7 @@ fsw:	cmp #$7
 	inc copy_request
 fdone:	moveLilies() 
 	dec exec_count
+	mov curbg : $d021
 	asl $d019
 	finishISR()
 
@@ -338,7 +342,7 @@ miss:	mov16 #missed : nextFrameISR
 	bcs !+
 newbest:	mov16 score : bestscore
 !:
-	mov #15 : secondsc
+	mov #7 : secondsc
 	mov #0 : seconds
 	sta powerLevel
 	sta powerdir
@@ -403,9 +407,12 @@ hit:	mov16 #finishFrame : aniptr
 	jmp finishFrame
 
 skip:	dec exec_count
+	inc frame_drops
+	delay(100)
+	mov curbg : $d021
 	finishISR()
 
-
+.label frame_drops = reserve(1,0)
 
 .label rand = reserve(1,%10011101)
 .label rand_hi = reserve(1,%01011011)
@@ -584,8 +591,6 @@ chklo:	lda scrolling
 	jmp finishFrame
 complete:	initLily()
 	mov16 #frameISR : nextFrameISR
-!:	lda #0
-	sta keyheld
 	SIDgate(SFX_CHAN, 0)
-	initFrog()
+	refreshPreframe()
 	jmp finishFrame

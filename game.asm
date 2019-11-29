@@ -52,14 +52,18 @@ powdone:
 	moveSprite(4, 0, 216)
 	loadSprite(lily2, 5)
 	moveSprite(5, 0, 216)
+	loadSprite(lilys11, 6)
+	moveSprite(6, startx, starty + 21)
+	disableSprite(6)
+	loadSprite(lilys12, 7)
+	moveSprite(7, startx + 24, starty + 21)
+	disableSprite(7)
 	lda #0
 	sta SPRYEX
 	sta SPRXEX
 }
 
 .macro initFrog() {
-	.const startx = 35
-	.const starty = 196
 	loadSprite(frog1, 0)
 	loadSprite(frog2, 1)
 	loadSprite(frog3, 2)
@@ -68,15 +72,6 @@ powdone:
 	moveSprite(1, startx + 24, starty)
 	moveSprite(2, startx, starty + 21)
 	moveSprite(3, startx + 24, starty + 21)
-
-	loadSprite(lilys11, 6)
-	moveSprite(6, startx, starty + 21)
-	disableSprite(6)
-	loadSprite(lilys12, 7)
-	moveSprite(7, startx + 24, starty + 21)
-	disableSprite(7)
-	enableSprite(4)
-	enableSprite(5)
 	
 	setSpriteMC(5, 13)
 }
