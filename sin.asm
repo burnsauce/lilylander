@@ -4,8 +4,9 @@ qsin:
 .segment Data "Quarter-Sin() table"
 sin_table:
 .for(var i=0; i<256/4; i++) {
-	.var sv = 128 * sin(toRadians((i / 255) * 360))
-	.byte min(max(-127, round(sv)), 127)
+	.var sv = 127 * sin(toRadians((i / 255) * 360))
+	//.byte round(sv)
+	.byte sv
 }
 
 .macro initQSin() {

@@ -1,46 +1,46 @@
 .pseudocommand unrollMemCopy from:to:size:codeAddr {
-	mov16 from : unrAddr
-	mov16 to : unwAddr
-	mov16 codeAddr : uncAddr
-	mov16 size : unSize
+	mov16 from : tmp0
+	mov16 to : cfreq
+	mov16 codeAddr : lily1ramp
+	mov16 size : score
 
 // header?
 	ldy #0
 // copy code
 copyloop:	
 	lda #LDA_ABS
-	sta (uncAddr),y		// lda
-	inc16 uncAddr
+	sta (lily1ramp),y		// lda
+	inc16 lily1ramp
 
-	lda unrAddr
-	sta (uncAddr),y		// lobyte
-	inc16 uncAddr
+	lda tmp0
+	sta (lily1ramp),y		// lobyte
+	inc16 lily1ramp
 	
-	lda unrAddr + 1
-	sta (uncAddr),y		// hibyte ;
-	inc16 uncAddr
-	inc16 unrAddr
+	lda tmp0 + 1
+	sta (lily1ramp),y		// hibyte ;
+	inc16 lily1ramp
+	inc16 tmp0
 
 	lda #STA_ABS
-	sta (uncAddr),y		// sta
-	inc16 uncAddr
+	sta (lily1ramp),y		// sta
+	inc16 lily1ramp
 
-	lda unwAddr
-	sta (uncAddr),y		// lobyte
-	inc16 uncAddr
+	lda cfreq
+	sta (lily1ramp),y		// lobyte
+	inc16 lily1ramp
 
-	lda unwAddr + 1
-	sta (uncAddr),y		// hi byte ;
-	inc16 uncAddr
-	inc16 unwAddr
+	lda cfreq + 1
+	sta (lily1ramp),y		// hi byte ;
+	inc16 lily1ramp
+	inc16 cfreq
 	
-	dec16 unSize
-	cmp16 unSize : #0
+	dec16 score
+	cmp16 score : #0
 	bne copyloop
 
 	// footer
 	
 	lda #RTS
-	sta (uncAddr),y		// rts
-	//inc16 uncAddr
+	sta (lily1ramp),y		// rts
+	//inc16 lily1ramp
 }

@@ -15,7 +15,6 @@
 	lda #mc2
 	sta sprmc2
 }
-.label lsarg = reserve(1, 0)
 
 .macro loadSprite(location, num) {
 	lda #location
@@ -24,7 +23,7 @@
 	sta sprp2, y
 	.eval location = (((location + 1) * 64) - 1) + sprbase
 	lda location
-	sta lsarg
+	sta tmp0
 	and #$80	 // multicolor
 	beq !+
 	lda #(1 << num) 
@@ -34,7 +33,7 @@
 !:	lda #(1 << num) ^ $ff
 	and sprmc
 	sta sprmc
-!:	lda lsarg
+!:	lda tmp0
 	and #$0F // color
 	sta sprcolor + num
 	enableSprite(num)

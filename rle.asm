@@ -1,3 +1,16 @@
+.label rreadV = reserve(0)
+.label rrunByte = reserve(1,0)
+.label rrunCount = reserve(1,0)
+.label breadV = reserve(0)
+.label brunByte = reserve(1,0)
+.label brunCount = reserve(1,0)
+.label mreadV = reserve(0)
+.label mrunByte = reserve(1,0)
+.label mrunCount = reserve(1,0)
+.label colbyte = reserve(1,0)
+.label wrV = reserve(0)
+.label wrV2 = reserve(0)
+
 .macro rleReset(resetV, readV, runCount, runByte) {
 	mov #0 : runCount
 	mov16 #resetV : readV
@@ -52,7 +65,6 @@ rleUnpackTitle:
 	sty brunCount
 	sty mrunByte
 	sty mrunCount
-	sty row
 	
 	// load read vectors
 	mov16 #bitmapr : breadV
@@ -63,7 +75,7 @@ rleUnpackTitle:
 	mov16 #bmbase : wrV2
 	mov16 wrV2 : wrV
 	lda #40
-	sta column
+	sta tmp0
 	ldy #0
 	ldx #cols
 block:	rleNextByte(bitmap, breadV, brunCount, brunByte)
@@ -80,14 +92,14 @@ block:	rleNextByte(bitmap, breadV, brunCount, brunByte)
 !:	ldx #cols
 	add16 wrV2 : #8 : wrV2
 	mov16 wrV2 : wrV
-	dec column
+	dec tmp0
 	beq !+
 	jmp block
 !:
 	// prepare matrix decode
 	mov16 #mbase : wrV2
 	lda #40
-	sta column
+	sta tmp0
 	ldy #0
 	ldx #cols
 	mov16 wrV2 : wrV
@@ -101,7 +113,7 @@ col2:	rleNextByte(matrix, mreadV, mrunCount, mrunByte)
 !:	ldx #cols
 	inc16 wrV2
 	mov16 wrV2 : wrV
-	dec column
+	dec tmp0
 	beq !+
 	jmp col2
 
@@ -109,7 +121,7 @@ col2:	rleNextByte(matrix, mreadV, mrunCount, mrunByte)
 !:	mov16 #rbase : wrV2
 	mov16 wrV2 : wrV
 	lda #40
-	sta column
+	sta tmp0
 	ldy #0
 	ldx #cols
 col3:	rleNextByte(colorram, rreadV, rrunCount, rrunByte)
@@ -122,7 +134,7 @@ col3:	rleNextByte(colorram, rreadV, rrunCount, rrunByte)
 !:	ldx #cols
 	inc16 wrV2
 	mov16 wrV2 : wrV
-	dec column
+	dec tmp0
 	beq !+
 	jmp col3
 !:

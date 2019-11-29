@@ -34,21 +34,10 @@
 }
 .label zplast = nextVar 
 }
-// RLE
-.label rreadV = reserve(0)
-.label rrunByte = reserve(1,0)
-.label rrunCount = reserve(1,0)
-.label breadV = reserve(0)
-.label brunByte = reserve(1,0)
-.label brunCount = reserve(1,0)
-.label mreadV = reserve(0)
-.label mrunByte = reserve(1,0)
-.label mrunCount = reserve(1,0)
-.label column = reserve(1,0)
-.label colbyte = reserve(1,0)
-.label row = reserve(1,0)
-.label wrV = reserve(0)
-.label wrV2 = reserve(0)
+
+// temp
+.label tmp0 = reserve(0)
+
 // DblBuf
 .label vicBank = reserve(1,$02)
 // Frame
@@ -58,10 +47,10 @@
 // SID
 .label SIDctrl = reserve(3,0)
 // Unroll (temp)
-.label unrAddr = reserve(0)
-.label unwAddr = reserve(0)
-.label uncAddr = reserve(0)
-.label unSize = reserve(0)
+//.label unrAddr = reserve(0)
+//.label unwAddr = reserve(0)
+//.label uncAddr = reserve(0)
+//.label unSize = reserve(0)
 
 
 // default labels

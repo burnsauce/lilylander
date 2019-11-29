@@ -14,7 +14,6 @@
 .label scrollamt = reserve(2,0)
 .label nextFrameISR = reserve(0)
 .label aniptr = reserve(0)
-.label ftmp = reserve(0)
 .label phcount = reserve(1,0)
 .label seconds = reserve(1,0)
 .label secondsc = reserve(1,0)
@@ -92,9 +91,9 @@ doscroll:	dec xscroll
 	sta xscroll
 	lda #$f8
 	and $d016
-	sta ftmp
+	sta tmp0
 	lda xscroll
-	ora ftmp
+	ora tmp0
 	sta $d016
 	lda xscroll
 	cmp #$6
@@ -368,8 +367,8 @@ hit:	mov16 #finishFrame : aniptr
 	mov16 #landed : nextFrameISR
 	rnd16 lily1ramp
 	// set scrolling amount to d - 60
-	getfrogpos ftmp 
-	sub16 ftmp : #60 : scrolling
+	getfrogpos tmp0 
+	sub16 tmp0 : #60 : scrolling
 	lda #$80
 	ora scrolling + 1
 	sta scrolling + 1
@@ -389,14 +388,14 @@ hit:	mov16 #finishFrame : aniptr
 !:	lda level
 	asl
 	tay
-	mov16 leveldata,y : ftmp
+	mov16 leveldata,y : tmp0
 	clc
-	ror ftmp + 1
-	ror ftmp
+	ror tmp0 + 1
+	ror tmp0
 	clc
-	ror ftmp + 1
-	ror ftmp
-	add16 ftmp : score : score
+	ror tmp0 + 1
+	ror tmp0
+	add16 tmp0 : score : score
 
 	mov #0 : powerLevel
 	sta powerdir
@@ -554,12 +553,12 @@ hitone:	SIDfreq(SFX_CHAN, $1E00)
 	// Win condition?
 	jmp finishFrame
 ltwo:	
-	getfrogpos ftmp 
-	lda ftmp + 1
+	getfrogpos tmp0 
+	lda tmp0 + 1
 	beq !+
 	dec seconds
 	jmp finishFrame
-!:	lda ftmp
+!:	lda tmp0
 	cmp #110
 	bcc !+
 	dec seconds

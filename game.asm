@@ -1,8 +1,6 @@
-.label lily1offset = reserve(1,319-150)
-.label frogoffset = reserve(1,60)
-.label frogpos = reserve(1,0)
+.const lily1offset = 319-150
+.label cfreq = reserve(0)
 
-.label cfreq = reserve(2,0)
 #import "sin.asm"
 .pseudocommand getfrogpos tar {
 	lda $d002
@@ -117,7 +115,12 @@ movelily:	lda level
 	asl
 	tay
 	add16 leveldata,y : lily1ramp : lily1ramp
-!:	sin lily1ramp + 1 : lilypos
+	mov #0 : tmp0 + 1
+	mov lily1ramp + 1 : tmp0
+	lda lily1ramp
+	bpl !+
+	inc tmp0
+!:	sin tmp0 : lilypos
 	clc
 	adc #128
 	lsr
@@ -125,11 +128,11 @@ movelily:	lda level
 	lda level
 	lda scrollamt 
 	beq done
-	dec lily1offset
+	dec lilypos
 	dec scrollamt
 done:	lda lilypos	
 	clc
-	adc lily1offset
+	adc #lily1offset
 	bcc noover
 	// overflow already
 	sbc #24
@@ -148,7 +151,7 @@ foundhi:	sta $d008
 !:	sta $d010
 	lda lilypos
 	clc
-	adc lily1offset
+	adc #lily1offset
 	sta $d00A
 	//sta $d00E
 	bcc !+
