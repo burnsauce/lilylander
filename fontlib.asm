@@ -65,6 +65,7 @@ nextbit:	asl val
 	lda bcdbuf + 1
 	and #$f0
 	lsr	
+	sta fontt
 	add16 #font_numerals : fontt : fontp 
 	ldy #5
 !:	dey
@@ -90,7 +91,9 @@ nextbit:	asl val
 	lda bcdbuf
 	and #$f0
 	lsr	
+	sta fontt
 	add16 #font_numerals : fontt : fontp 
+	sta fontt
 	ldy #5
 !:	dey
 	bmi !+
@@ -132,6 +135,7 @@ nextbit:	asl val
 	lda bcdbuf + 1
 	and #$f0
 	lsr	
+	sta fontt
 	add16 #font_numerals : fontt : fontp 
 	ldy #5
 !:	dey
@@ -157,6 +161,7 @@ nextbit:	asl val
 	lda bcdbuf
 	and #$f0
 	lsr	
+	sta fontt
 	add16 #font_numerals : fontt : fontp 
 	ldy #5
 !:	dey

@@ -24,6 +24,7 @@ init:
 
 	unrollMemCopy #rmb:#$d800:#(13 * 40):#doColorRamCopy
 
+	SIDvol(10)
 	// wait for high raster
 !:	lda $d011
 	bpl !-
@@ -94,7 +95,9 @@ init:
 	zeroMem(bmb1 + 13 * 8 * 40, 12 * 8 * 40)
 	zeroMem(smb1 + 13 * 40, 12 * 40)
 	zeroMem(rmb + 13 * 40, 12 * 40)
-	
+	SIDtri(SFX_CHAN)	
+	SIDgate(SFX_CHAN, 0)
+	SIDadsr(SFX_CHAN, 2, 0, $f, 2) 
 	lda #%00010000
 	sta $d016
 	initFrog()

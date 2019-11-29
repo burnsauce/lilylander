@@ -22,15 +22,14 @@
 	sta cfreq
 	lda #$08
 	sta cfreq + 1
-	SIDvol(10)
-	SIDtri(1)
-	SIDadsr(1, 1, 7, 15, 2)
-	SIDfreqd(1, cfreq)
-	SIDgate(1, 1)
+	SIDtri(SFX_CHAN)
+	SIDadsr(SFX_CHAN, 1, 7, 15, 2)
+	SIDfreqd(SFX_CHAN, cfreq)
+	SIDgate(SFX_CHAN, 1)
 }
 
 .macro jmpstop() {
-	SIDgate(1, 0)
+	SIDgate(SFX_CHAN, 0)
 }
 
 .label powerdir = reserve(1,0)

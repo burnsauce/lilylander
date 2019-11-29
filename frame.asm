@@ -1,10 +1,8 @@
-.segment Code 
 
 .const PRA	 = $dc00
 .const DDRA	 = $dc02
 .const PRB	 = $dc01
 .const DDRB	 = $dc03
-
 
 .label frspd = reserve(1,0)
 .label frdiv = reserve(1,12)
@@ -26,6 +24,7 @@
 .label score = reserve(2,0)
 .label bestscore = reserve(2,0)
 .label curbg = reserve(1,0)
+
 .macro scankey(col) {
 	lda #((1 << col) ^ $ff)
 	sta PRA
@@ -65,8 +64,8 @@
 		nop
 	}
 }
+.segment Code "Frame Code"
 
-*=* "finishFrame"
 finishFrame:
 	lda #$80
 	and scrolling + 1
@@ -110,7 +109,6 @@ fdone:	moveLilies()
 	finishISR()
 
 .label watercolor = reserve(1, 6)
-*=* "preFrameISR"
 preFrameISR:
 	pha
 	delay(40)
@@ -121,14 +119,13 @@ preFrameISR:
 	asl $d019
 	pla; rti
 
-*=* "Animation Handlers"
 .label frogt = reserve(1,0)
 ph1ani:	pushFrogRight(frspd)
 	pushFrogUp(3)
 	lda #$02
 	adc cfreq + 1
 	sta cfreq + 1
-	SIDfreqd(1, cfreq)
+	SIDfreqd(SFX_CHAN, cfreq)
 	jmp finishFrame
 
 ph2ani:	pushFrogRight(frspd)
@@ -156,11 +153,10 @@ ph3ani:	pushFrogRight(frspd)
 	dec frogt
 	jmp finishFrame
 
-*=* "titleISR"
 titleISR:	startISR()
 	lda t_bgcolor
 	sta BG0COL
-	lda #6
+	lda #$6
 	sta $d020
 	lda #$ff
 	sta DDRA
@@ -186,7 +182,14 @@ titledone:
 	lda bestscore
 	ora bestscore + 1
 	beq titlefinal
-	cmp16 score : bestscore
+	lda bestscore + 1
+	sec
+	sbc score + 1
+	bcc flash
+	bne titlefinal
+	lda bestscore
+	sbc score
+	bcc flash
 	bne titlefinal
 flash:	inc lily1ramp
 	bne titlefinal
@@ -198,7 +201,6 @@ flash:	inc lily1ramp
 titlefinal:	finishISR()
 titletmp:	.byte 5
 
-*=* "frameISR"
 frameISR:
 	// GAME LOGIC
 	//startFrame(28)
@@ -257,9 +259,9 @@ holding:
 	lsr
 	lsr
 	clc
-	adc #8
+	adc #$0c
 	sta cfreq + 1
-	SIDfreqd(1, cfreq)
+	SIDfreqd(SFX_CHAN, cfreq)
 !:	animate()
 skipkey:
 	dec phcount
@@ -339,12 +341,14 @@ miss:	mov16 #missed : nextFrameISR
 	bcs !+
 newbest:	mov16 score : bestscore
 !:
-	mov #0 : seconds
 	mov #15 : secondsc
-	mov #0 : powerLevel
-	mov #0 : powerdir
-	SIDfreq(1, $0F00)
-	SIDgate(1, 1)
+	mov #0 : seconds
+	sta powerLevel
+	sta powerdir
+	SIDfreq(SFX_CHAN, $8F00)
+	SIDnoise(SFX_CHAN)
+	SIDadsr(SFX_CHAN, $2, $a, $f, $a)
+	SIDgate(SFX_CHAN, 1)
 	pushFrogDown(11)
 	loadSprite(frogdie11, 0)
 	loadSprite(frogdie12, 1)
@@ -373,8 +377,8 @@ hit:	mov16 #finishFrame : aniptr
 	sta scrolling + 1
 	mov #0 : seconds
 	mov #15 : secondsc
-	SIDfreq(1, $0F00)
-	SIDgate(1, 1)
+	SIDfreq(SFX_CHAN, $0F00)
+	SIDgate(SFX_CHAN, 1)
 	jmp finishFrame
 
 skip:	dec exec_count
@@ -413,22 +417,21 @@ skip:	dec exec_count
 
 .label waiting = reserve(1,0)
 
-* = * "Missed Handler"
 missed:	startFrame(0)
+	SIDgate(SFX_CHAN, 0)
 	lda waiting
 	beq !+
 	jmp chkcopy
 !:	dec secondsc
 	beq !+
 	animate()
-!:	mov #15 : secondsc
+!:	mov #7 : secondsc
 	inc seconds
 	lda seconds
 	cmp #1
 	beq lotone
-	SIDgate(1, 0)
 	jmp wait1more
-lotone:	SIDfreq(1, $0780)
+lotone:	
 	mov16 #finishFrame : aniptr
 	disableSprite(6)
 	disableSprite(7)
@@ -471,8 +474,8 @@ chkcopy:	lda copy_request
 	showTitle()
 	jmp finishFrame
 
-* = * "Landed Handler"
 landed:	startFrame(0)
+	.break
 	dec secondsc
 	beq !+
 	jmp chkscrol
@@ -481,9 +484,9 @@ landed:	startFrame(0)
 	lda seconds
 	cmp #1
 	beq hitone
-	SIDgate(1, 0)
+	SIDgate(SFX_CHAN, 0)
 	jmp ltwo 
-hitone:	SIDfreq(1, $1E00)
+hitone:	SIDfreq(SFX_CHAN, $1E00)
 	disableSprite(6)
 	disableSprite(7)
 	loadSprite(frog1, 0)
@@ -498,11 +501,11 @@ ltwo:
 	dec seconds
 	jmp finishFrame
 !:	lda ftmp
-	cmp #80
+	cmp #110
 	bcc !+
 	dec seconds
 	jmp finishFrame
-!:	ldy #8
+!:	ldy #15
 	sty secondsc
 	moveLilies()
 	lda seconds
@@ -529,7 +532,6 @@ chklo:	lda scrolling
 	jmp finishFrame
 complete:	initLily()
 	mov16 #frameISR : nextFrameISR
-	rnd16 lily1ramp
 	inc level
 	lda #63
 	and level
@@ -539,6 +541,6 @@ complete:	initLily()
 	//inc watercolor
 !:	lda #0
 	sta keyheld
-	SIDgate(1, 0)
+	SIDgate(SFX_CHAN, 0)
 	initFrog()
 	jmp finishFrame

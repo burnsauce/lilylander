@@ -10,6 +10,9 @@
     .return CmdArgument(arg.getType(),arg.getValue()+1)
 }
 .function _24bitNext(arg) {
+    .if (arg.getType()==AT_IMMEDIATE) {
+        .error "No 24-bit immediates!"
+     }
     .return CmdArgument(arg.getType(),arg.getValue()+2)
 }
 
