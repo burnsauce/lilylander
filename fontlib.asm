@@ -1,5 +1,5 @@
 .segment Data2 "Font Data"
-#import "font.asm"
+#import "build/font.asm"
 .segment Code 
 
 .pseudocommand ycopy from : to : size {

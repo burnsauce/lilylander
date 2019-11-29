@@ -1,9 +1,3 @@
-*.prg
-*.txt
-*.sym
-*.vs
 KickAss.jar
-*.d64
-font.asm
-bgdata.asm
-titledata.asm
+release/*
+build/*

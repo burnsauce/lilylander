@@ -11,7 +11,7 @@ blocks = {}
 
 p = re.compile(r'  \*?\$([0-9a-f]{4})-\$([0-9a-f]{4}) (.*)')
 
-with open("memmap.txt", "r") as f:
+with open("build/memmap.txt", "r") as f:
 	for line in f:
 		m = p.match(line)
 		if m != None:

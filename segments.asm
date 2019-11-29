@@ -33,4 +33,4 @@ sprbank2:
 .segment BitmapBuf2	[start=$e000, min=$e000, max=$ff40, virtual, fill]
 bmb2: .fill $1f40, 0
 
-.file [name="ll.prg", segments="Code,Code2,Data,Data2,InitCode,Sprites1,RLEBitmap,RLEMatrix,RLEColor"]
+.file [name="build/ll.prg", segments="Code,Code2,Data,Data2,InitCode,Sprites1,RLEBitmap,RLEMatrix,RLEColor"]

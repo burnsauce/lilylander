@@ -12,7 +12,7 @@ with open("main.vs", "r") as f:
 		else:
 			rawlines.append(line)
 
-with open("main.vs", "w") as f:
+with open("build/main.vs", "w") as f:
 	lastlbl=""
 	zpcount=0
 	wzcount=0
@@ -25,6 +25,7 @@ with open("main.vs", "w") as f:
 					zplast=True
 				if label.startswith('.zp') and not zplast:
 					zpcount += 1
+					print '%04x: %s_%d' % (addr, lastlbl, zpcount)
 					continue
 				elif not zplast:
 					f.write('al C:%04x %s\n' % (addr, label))
