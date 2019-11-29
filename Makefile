@@ -1,7 +1,7 @@
 ll.prg: *.asm bgdata.asm titledata.asm font.asm
 	@java -jar KickAss.jar -cfgfile debug.cfg main.asm | tee memmap.txt	
 	@python cleanlabels.py
-	@python memmap.py
+	@python memmap.py | tee memlayout.txt
 
 bgdata.asm: rle.py bg.gif
 	@echo Rebuilding background data
