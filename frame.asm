@@ -156,8 +156,6 @@ titleISR:	startISR()
 	jsr $5403
 	lda t_bgcolor
 	sta BG0COL
-	lda #$6
-	sta $d020
 	lda #$ff
 	sta DDRA
 	lda #0
