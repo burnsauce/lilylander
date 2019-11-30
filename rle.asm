@@ -17,22 +17,20 @@
 }
 
 .macro rleNextByte(resetV, readV, runCount, runByte) {
-	txa
-	pha
 	lda runCount
 	beq !+
 	dec runCount
 	jmp done
-!:	ldx #0
-	lda (readV, x)
+!:	
+	lda (readV), y
 	sta runByte
 	inc16 readV
-	lda (readV, x)
+	lda (readV), y
 	cmp runByte
 	beq !+
 	jmp done
 !:	inc16 readV
-	lda (readV, x)
+	lda (readV), y
 	beq reset
 	sta runCount
 	inc16 readV
@@ -41,8 +39,8 @@
 reset:	mov16 #resetV : readV
 	mov #0 : runCount
 	jmp !--
-done:	pla
-	tax
+done:	
+
 
 }
 .segment Code2 "rleUnpackImage"
@@ -78,7 +76,9 @@ rleUnpackTitle:
 	sta tmp0
 	ldy #0
 	ldx #cols
-block:	rleNextByte(bitmap, breadV, brunCount, brunByte)
+block:	tya; pha; ldy #0
+	rleNextByte(bitmap, breadV, brunCount, brunByte)
+	pla; tay
 	lda brunByte
 	sta (wrV),y
 	iny

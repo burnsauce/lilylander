@@ -34,7 +34,9 @@ bother:   	fastMemCopy(bmb1 + 8, bmb2, (13 * 8 * 40) - 8)
 	// Decode RLE Column
 bdecrle:	ldy #0 
 	ldx #13
-block2:	rleNextByte(bitmap, breadV, brunCount, brunByte)
+block2:	tya; pha; ldy #0
+	rleNextByte(bitmap, breadV, brunCount, brunByte)
+	pla; tay
 	lda brunByte
 	sta (wrV),y
 	iny
@@ -68,6 +70,8 @@ mdecrle:	ldy #0
 	bne !- 
 	rts
 
+copyDblRam:
+	fastMemCopy($d800 + 1, rmb, (13 * 40) - 1)
 unpackRamColumn:
 	// Unpack RLE Column
 	mov16 #rmb + 39 : wrV
@@ -81,7 +85,3 @@ unpackRamColumn:
 	bne !-
 	rts
 
-copyDblRam:
-	fastMemCopy($d800 + 1, rmb, (13 * 40) - 1)
-	jsr unpackRamColumn
-	rts
