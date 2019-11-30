@@ -2,7 +2,7 @@ disk: build/ll.prg
 	@mkdir -p release
 	@java -jar KickAss.jar -cfgfile "release.cfg" disk.asm
 
-build/ll.prg: *.asm build/bgdata.asm build/titledata.asm build/font.asm
+build/ll.prg: *.asm build/bgdata.asm build/titledata.asm build/font.asm song.prg
 	@mkdir -p build
 	@java -jar KickAss.jar -cfgfile "build.cfg" main.asm | tee build/memmap.txt
 	@python cleanlabels.py

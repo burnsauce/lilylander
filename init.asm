@@ -18,6 +18,10 @@ init:
 	initFrame()
 	initQSin()
 	
+	// music
+	lda #0
+	jsr $5400
+
 	lda #1
 	sta $01
 
@@ -30,7 +34,6 @@ init:
 
 	unrollMemCopy #rmb:#$d800:#(13 * 40):#doColorRamCopy
 
-	SIDvol(10)
 	// wait for high raster
 !:	lda $d011
 	bpl !-
@@ -110,9 +113,6 @@ init:
 	sta lastscore + 1
 	sta level
 	
-	SIDtri(SFX_CHAN)	
-	SIDgate(SFX_CHAN, 0)
-	SIDadsr(SFX_CHAN, 2, 0, $f, 2) 
 	initFrog()
 	initLily()
 	

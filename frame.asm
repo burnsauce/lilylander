@@ -112,22 +112,19 @@ fdone:	moveLilies()
 	finishISR()
 
 preFrameISR:
-	pha
+	startISR()
 	delay(40)
 	mov #6 : $d021
 	mov16 nextFrameISR : $fffe
+	jsr $5403
 	lda #frameRaster
 	sta $d012
 	asl $d019
-	pla; rti
+	finishISR()
 
 .label frogt = reserve(1,0)
 ph1ani:	pushFrogRight(frspd)
 	pushFrogUp(3)
-	lda #$02
-	adc cfreq + 1
-	sta cfreq + 1
-	SIDfreqd(SFX_CHAN, cfreq)
 	jmp finishFrame
 
 ph2ani:	pushFrogRight(frspd)
@@ -156,6 +153,7 @@ ph3ani:	pushFrogRight(frspd)
 	jmp finishFrame
 
 titleISR:	startISR()
+	jsr $5403
 	lda t_bgcolor
 	sta BG0COL
 	lda #$6
@@ -193,14 +191,14 @@ titledone:
 	sbc score
 	bcc flash
 	bne titlefinal
-flash:	inc lily1ramp
-	bne titlefinal
+flash:
 	dec titletmp
 	bpl !+
 	lda #4
 	sta titletmp
 !:	pokeBestScoreColor(titletmp)	
-titlefinal:	finishISR()
+titlefinal:	asl $d019
+	finishISR()
 titletmp:	.byte 5
 
 frameISR:
@@ -252,7 +250,6 @@ jumpnow:
 holding:
 	lda keyheld
 	bne !+
-	jmpsound()
 	lda #1
 	sta keyheld
 !:	updatePower()
@@ -262,7 +259,6 @@ holding:
 	clc
 	adc #$0c
 	sta cfreq + 1
-	SIDfreqd(SFX_CHAN, cfreq)
 !:	animate()
 skipkey:
 	dec phcount
@@ -276,7 +272,7 @@ skipkey:
 	cmp #1
 	beq ph1
 	jmp ph2
-ph1:	jmpsound()
+ph1:	
 	loadSprite(frogj1, 0)
 	loadSprite(frogj2, 1)
 	loadSprite(frogj3, 2)
@@ -290,7 +286,7 @@ ph1:	jmpsound()
 ph2:	cmp #2
 	beq !+
 	jmp ph3
-!:	jmpstop()
+!:
 	loadSprite(frogs1, 0)
 	loadSprite(frogs2, 1)
 	disableSprite(2)
@@ -345,10 +341,6 @@ newbest:	mov16 score : bestscore
 	mov #0 : seconds
 	sta powerLevel
 	sta powerdir
-	SIDfreq(SFX_CHAN, $8F00)
-	SIDnoise(SFX_CHAN)
-	SIDadsr(SFX_CHAN, $2, $a, $f, $a)
-	SIDgate(SFX_CHAN, 1)
 	pushFrogDown(11)
 	loadSprite(frogdie11, 0)
 	loadSprite(frogdie12, 1)
@@ -401,8 +393,6 @@ hit:	mov16 #finishFrame : aniptr
 	sta powerdir
 	sta seconds
 	mov #15 : secondsc
-	SIDfreq(SFX_CHAN, $0F00)
-	SIDgate(SFX_CHAN, 1)
 	jmp finishFrame
 
 skip:	dec exec_count
@@ -445,7 +435,6 @@ skip:	dec exec_count
 .label waiting = reserve(1,0)
 
 missed:	startFrame(0)
-	SIDgate(SFX_CHAN, 0)
 	lda waiting
 	beq !+
 	jmp chkcopy
@@ -516,9 +505,8 @@ landed:	startFrame(0)
 	lda seconds
 	cmp #1
 	beq hitone
-	SIDgate(SFX_CHAN, 0)
 	jmp ltwo 
-hitone:	SIDfreq(SFX_CHAN, $1E00)
+hitone:	
 	paintScore()
 	loadSprite(canvas1, 6)
 	lda #(1<<6)
@@ -590,6 +578,5 @@ chklo:	lda scrolling
 	jmp finishFrame
 complete:	initLily()
 	mov16 #frameISR : nextFrameISR
-	SIDgate(SFX_CHAN, 0)
 	refreshPreframe()
 	jmp finishFrame

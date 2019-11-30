@@ -1,3 +1,4 @@
+
 .segment Stack	[start=$0100, min=$0100, max=$01ff, virtual] "Stack"
 .fill $100, 0
 .segment CopyCode	[startAfter="Stack", max=$0200 + $0bb9, virtual]
@@ -17,11 +18,13 @@ sprbank1:
 .segment ColorBuffer 	[startAfter="Sprites1", virtual]
 rmb: .fill 25 * 40, 0
 .segmentdef InitCode 	[startAfter="Sprites1", modify="BasicUpstart", _start=init]
-.segmentdef Code2 	[startAfter="InitCode"]
-.segmentdef Data2 	[startAfter="Code2"]
+.segmentdef Music [prgFiles="song.prg"]
+.segmentdef Code2 	[start=$5a13]
 .segment BitmapBuf	[start=$6000, min=$6000, max=$7f3f, virtual, fill]
 bmb1: .fill $1f40, 0
 .segmentdef RLEBitmap	[startAfter="BitmapBuf"]
+.segmentdef Data2 	[startAfter="RLEBitmap"]
+.segmentdef Code3 	[startAfter="Data2"]
 .segment MatrixBuf2 	[start=$c000, min=$c000, max=$c3f7, virtual, fill]
 smb2: .fill $3f8,0
 .segment SprPtrs2	[start=$c3f8, min=$c3f8, max=$c3ff, virtual, fill]
@@ -33,4 +36,4 @@ sprbank2:
 .segment BitmapBuf2	[start=$e000, min=$e000, max=$ff40, virtual, fill]
 bmb2: .fill $1f40, 0
 
-.file [name="build/ll.prg", segments="Code,Code2,Data,Data2,InitCode,Sprites1,RLEBitmap,RLEMatrix,RLEColor"]
+.file [name="build/ll.prg", segments="Code,Code2,Code3,Data,Data2,InitCode,Sprites1,RLEBitmap,RLEMatrix,RLEColor,Music"]

@@ -20,7 +20,7 @@
 	rleReset(colorram, rreadV, rrunCount, rrunByte)	
 }
 
-.segment Code2 "copyDblBitmap"
+.segment Code2 "DblBuf Code"
 copyDblBitmap:
 	lda vicBank
 	beq !+
@@ -46,7 +46,7 @@ block2:	rleNextByte(bitmap, breadV, brunCount, brunByte)
 	bne block2
 	rts
 
-.segment Code2 "copyDblMatrix"
+.segment Code3 "DblBuf Code"
 copyDblMatrix:
 	lda vicBank
 	beq !+
@@ -68,7 +68,6 @@ mdecrle:	ldy #0
 	bne !- 
 	rts
 
-.segment Code2 "unpackRamColumn"
 unpackRamColumn:
 	// Unpack RLE Column
 	mov16 #rmb + 39 : wrV
@@ -82,7 +81,6 @@ unpackRamColumn:
 	bne !-
 	rts
 
-.segment Code2 "copyDblRam"
 copyDblRam:
 	fastMemCopy($d800 + 1, rmb, (13 * 40) - 1)
 	jsr unpackRamColumn

@@ -13,7 +13,6 @@
 #import "unroll.asm"
 #import "dblbuf.asm"
 #import "sprlib.asm"
-#import "sid.asm"
 #import "rle.asm"
 #import "build/bgdata.asm"
 #import "build/titledata.asm"

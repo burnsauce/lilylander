@@ -15,20 +15,6 @@
 	sta _16bitNext(tar)
 !:
 }
-.macro jmpsound() {
-	lda #$00
-	sta cfreq
-	lda #$08
-	sta cfreq + 1
-	SIDtri(SFX_CHAN)
-	SIDadsr(SFX_CHAN, 1, 7, 15, 2)
-	SIDfreqd(SFX_CHAN, cfreq)
-	SIDgate(SFX_CHAN, 1)
-}
-
-.macro jmpstop() {
-	SIDgate(SFX_CHAN, 0)
-}
 
 .label powerdir = reserve(1,0)
 .macro updatePower() {
