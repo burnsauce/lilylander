@@ -19,7 +19,7 @@ sprbank1:
 rmb: .fill 25 * 40, 0
 .segmentdef InitCode 	[startAfter="Sprites1", modify="BasicUpstart", _start=init]
 .segmentdef Music [prgFiles="song.prg"]
-.segmentdef Code2 	[start=$5a13]
+.segmentdef Code2 	[start=$5a6c]
 .segment BitmapBuf	[start=$6000, min=$6000, max=$7f3f, virtual, fill]
 bmb1: .fill $1f40, 0
 .segmentdef RLEBitmap	[startAfter="BitmapBuf"]

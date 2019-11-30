@@ -3,74 +3,68 @@
 #import "sin.asm"
 
 .segment Data "SFX Data"
+
+.const powerlen = 4 
+.const snddiv = 4 
+
 sfx_jump:
 .byte $10,$f1,$00
 .for(var i=0; i<32; i++) {
 	.byte $a8 + i 
 	.byte $11
 }
-
 .byte $00
 
-sfx_power:
-.for(var i=0; i<16; i++) {
-	.byte $2a,$f0,$00
-	.for(var j=0; j<10; j++) {
-	.byte $a8 + (i * 2) + (j / 10) * ((i+1) *2),$11
-	}
-	.byte $00
+sfx_splash:
+.byte $1a,$00,$00
+.for(var i=0; i<32; i++) {
+	.byte $ff - i 
+	.byte $81
 }
 
-.macro powersound() {
-	mov powerLevel : tmp0
-	mov #0 : tmp0+1
-	mov #0 : tmp1
-	asl tmp0
-	bcc !+
-	clc
-	lda #8 * 24
-	adc tmp0+1
-	sta tmp0+1
-!:	asl tmp0
-	bcc !+
-	clc
-	lda #4 * 24
-	adc tmp0+1
-	sta tmp0+1
-	bcc !+
-	inc tmp1
-!:	asl tmp0
-	bcc !+
-	clc
-	lda #2 * 24
-	adc tmp0+1
-	sta tmp0+1
-	bcc !+
-	inc tmp1
-!:	asl tmp0
-	bcc !+
-	.break
-	clc
-	lda #1 * 24
-	adc tmp0+1
-	sta tmp0+1
-	bcc !+
-	inc tmp1
-!:	
-	lda tmp0+1
-	clc
-	adc #<sfx_power
-	ldy #>sfx_power
-	bcc !+
-	iny
-!:	dec tmp1
-	bmi !+
-	iny
-	jmp !-
+v3bak: .fill 7,0
+.macro restoreV3() {
+.for(var i=0; i<7; i++) {
+	lda v3bak + i
+	sta $e5 + V3FREQ - V1FREQ + i
+}
 
-!:	ldx #14
+}
+.macro copyGhostRegs() {
+	lda keyheld 
+	bne !+
+	jmp normal
+!:
+.for(var i=0; i<7; i++) {
+	lda $e5 + V3FREQ - V1FREQ + i
+	sta v3bak + i
+}
+	lda powerLevel
+	lsr
+	lsr
+	sta tmp0+1
+	lda #0
+	sta tmp0
+	add16 tmp0 : #$0a00 : tmp0
+	mov #$11 : $e5 + (V3CTRL - V1FREQ)
+	mov16 tmp0 : $e5 + (V3FREQ - V1FREQ)
+	mov16 #$F010 : $e5 + (V3AD - V1FREQ)
+	// copy all ghostregs
+normal:	ldx #$18
+copy:	lda $e5,x
+	sta $d400,x
+	dex
+	bpl copy
+	jmp done
+done:
+}
+.label powerramp = reserve(1,0)
+
+.macro splashsound() {
+	lda #<sfx_splash
+	ldy #>sfx_splash
+	ldx #14
 	jsr $5406
-
 }
 
 .macro jmpsound() {
@@ -106,7 +100,7 @@ down:	dec powerLevel
 	dec powerLevel
 	bne powdone
 	dec powerdir
-powdone:	
+powdone:	//powersound()
 }
 
 .macro initLily() {

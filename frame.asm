@@ -117,6 +117,7 @@ preFrameISR:
 	mov #6 : $d021
 	mov16 nextFrameISR : $fffe
 	jsr $5403
+	copyGhostRegs()
 	lda #frameRaster
 	sta $d012
 	asl $d019
@@ -154,6 +155,12 @@ ph3ani:	pushFrogRight(frspd)
 
 titleISR:	startISR()
 	jsr $5403
+	// copy ghostregs
+	ldx #$18
+tcopy:	lda $e5,x
+	sta $d400,x
+	dex
+	bpl tcopy
 	lda t_bgcolor
 	sta BG0COL
 	lda #$ff
@@ -228,6 +235,8 @@ frameISR:
 	bne jumpnow
 	animate()
 jumpnow:
+	lda #0
+	sta keyheld
 	jmpsound()
 	lda #1
 	sta jumping
@@ -243,18 +252,14 @@ jumpnow:
 	sta frspd
 	lda #10
 	sta frdiv
-	lda #0
-	sta keyheld
 	jmp skipkey
 holding:
 	lda keyheld
+	bne !+
 	lda #1
 	sta keyheld
-	lda powerLevel
-	and #$0e
-	bne !+
-	powersound()	
-!:	updatePower()
+!:	
+	updatePower()
 	animate()
 skipkey:
 	dec phcount
@@ -322,7 +327,8 @@ gotabs:	cmp #landingMargin
 	bpl miss
 	jmp hit
 
-miss:	mov16 #missed : nextFrameISR
+miss:	splashsound()
+	mov16 #missed : nextFrameISR
 	sec
 	lda bestscore + 1
 	sbc score + 1
@@ -483,6 +489,7 @@ chkcopy:	lda copy_request
 	and #%11111100
 	ora #2
 	sta $dd00
+	restoreV3()
 	showTitle()
 	jmp finishFrame
 
