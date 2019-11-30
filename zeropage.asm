@@ -37,6 +37,7 @@
 
 // temp
 .label tmp0 = reserve(0)
+.label tmp1 = reserve(0)
 
 // DblBuf
 .label vicBank = reserve(1,$02)

@@ -230,6 +230,7 @@ frameISR:
 	bne jumpnow
 	animate()
 jumpnow:
+	jmpsound()
 	lda #1
 	sta jumping
 	sta phcount
@@ -249,17 +250,14 @@ jumpnow:
 	jmp skipkey
 holding:
 	lda keyheld
-	bne !+
 	lda #1
 	sta keyheld
-!:	updatePower()
 	lda powerLevel
-	lsr
-	lsr
-	clc
-	adc #$0c
-	sta cfreq + 1
-!:	animate()
+	and #$0e
+	bne !+
+	powersound()	
+!:	updatePower()
+	animate()
 skipkey:
 	dec phcount
 	beq !+

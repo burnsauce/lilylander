@@ -1,6 +1,6 @@
 .pseudocommand unrollMemCopy from:to:size:codeAddr {
 	mov16 from : tmp0
-	mov16 to : cfreq
+	mov16 to : tmp1
 	mov16 codeAddr : lily1ramp
 	mov16 size : score
 
@@ -25,14 +25,14 @@ copyloop:
 	sta (lily1ramp),y		// sta
 	inc16 lily1ramp
 
-	lda cfreq
+	lda tmp1
 	sta (lily1ramp),y		// lobyte
 	inc16 lily1ramp
 
-	lda cfreq + 1
+	lda tmp1 + 1
 	sta (lily1ramp),y		// hi byte ;
 	inc16 lily1ramp
-	inc16 cfreq
+	inc16 tmp1
 	
 	dec16 score
 	cmp16 score : #0

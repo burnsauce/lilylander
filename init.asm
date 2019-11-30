@@ -18,8 +18,7 @@ init:
 	initFrame()
 	initQSin()
 	
-	// music
-	lda #0
+	lda #1
 	jsr $5400
 
 	lda #1
@@ -84,6 +83,8 @@ init:
 }
 	
 .macro startGame() {
+	lda #0
+	jsr $5400
 	// blank screen
 	lda #%00100111
 	sta $d011

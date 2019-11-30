@@ -1,7 +1,85 @@
 .const lily1offset = 319-150
-.label cfreq = reserve(0)
 
 #import "sin.asm"
+
+.segment Data "SFX Data"
+sfx_jump:
+.byte $10,$f1,$00
+.for(var i=0; i<32; i++) {
+	.byte $a8 + i 
+	.byte $11
+}
+
+.byte $00
+
+sfx_power:
+.for(var i=0; i<16; i++) {
+	.byte $2a,$f0,$00
+	.for(var j=0; j<10; j++) {
+	.byte $a8 + (i * 2) + (j / 10) * ((i+1) *2),$11
+	}
+	.byte $00
+}
+
+.macro powersound() {
+	mov powerLevel : tmp0
+	mov #0 : tmp0+1
+	mov #0 : tmp1
+	asl tmp0
+	bcc !+
+	clc
+	lda #8 * 24
+	adc tmp0+1
+	sta tmp0+1
+!:	asl tmp0
+	bcc !+
+	clc
+	lda #4 * 24
+	adc tmp0+1
+	sta tmp0+1
+	bcc !+
+	inc tmp1
+!:	asl tmp0
+	bcc !+
+	clc
+	lda #2 * 24
+	adc tmp0+1
+	sta tmp0+1
+	bcc !+
+	inc tmp1
+!:	asl tmp0
+	bcc !+
+	.break
+	clc
+	lda #1 * 24
+	adc tmp0+1
+	sta tmp0+1
+	bcc !+
+	inc tmp1
+!:	
+	lda tmp0+1
+	clc
+	adc #<sfx_power
+	ldy #>sfx_power
+	bcc !+
+	iny
+!:	dec tmp1
+	bmi !+
+	iny
+	jmp !-
+
+!:	ldx #14
+	jsr $5406
+
+}
+
+.macro jmpsound() {
+	lda #<sfx_jump
+	ldy #>sfx_jump
+	ldx #14
+	jsr $5406
+}
+
 .pseudocommand getfrogpos tar {
 	lda $d002
 	sta tar
