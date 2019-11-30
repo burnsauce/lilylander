@@ -21,6 +21,17 @@ sfx_splash:
 	.byte $ff - i 
 	.byte $81
 }
+.byte $00
+
+sfx_land:
+.byte $1a,$00,$22
+.for(var i=0; i<16; i++) {
+	.byte mod(i * 12, 48) + $a0 
+	.byte $21
+	.byte mod(i * 12, 48) + $a0 
+	.byte $21
+}
+.byte $00
 
 v3bak: .fill 7,0
 .macro restoreV3() {
@@ -59,6 +70,13 @@ copy:	lda $e5,x
 done:
 }
 .label powerramp = reserve(1,0)
+
+.macro landsound() {
+	lda #<sfx_land
+	ldy #>sfx_land
+	ldx #14
+	jsr $5406
+}
 
 .macro splashsound() {
 	lda #<sfx_splash

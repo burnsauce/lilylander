@@ -351,7 +351,8 @@ newbest:	mov16 score : bestscore
 	mov16 #finishFrame : aniptr
 	jmp finishFrame
 
-hit:	mov16 #finishFrame : aniptr
+hit:	landsound()
+	mov16 #finishFrame : aniptr
 	disableSprite(4)
 	disableSprite(5)
 	loadSprite(frogl1, 0)
