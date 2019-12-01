@@ -69,6 +69,8 @@
 .segment Code "Frame Code"
 
 finishFrame:
+	dec exec_count
+finishNonFrame:
 	lda #$80
 	and scrolling + 1
 	bne chkscroll
@@ -106,7 +108,6 @@ fsw:	cmp #$7
 	doSwitchBank()
 	inc copy_request
 fdone:	moveLilies() 
-	dec exec_count
 	mov curbg : $d021
 	asl $d019
 	finishISR()
@@ -464,7 +465,7 @@ lotone:
 	loadSprite(frogdie22, 1)
 	loadSprite(frogdie23, 2)
 	loadSprite(frogdie24, 3)
-	jmp finishFrame
+	jmp finishNonFrame
 wait1more:	lda seconds
 	cmp #2
 	beq !+
@@ -474,12 +475,12 @@ wait1more:	lda seconds
 	loadSprite(frogdie32, 1)
 	loadSprite(frogdie33, 2)
 	loadSprite(frogdie34, 3)
-	jmp finishFrame
+	jmp finishNonFrame
 chkcopy:	lda copy_request
 	beq !+
 	lda #1
 	sta waiting
-	jmp finishFrame
+	jmp finishNonFrame
 !:	sei
 	lda #0
 	sta waiting
@@ -499,9 +500,11 @@ chkcopy:	lda copy_request
 
 	mov #LILY_OFFSET : lily1offset
 
-	//restoreV3()
+	restoreV3()
 	showTitle()
-	jmp finishFrame
+	dec exec_count
+
+	finishISR()
 
 landed:	startFrame(0)
 	lda seconds
@@ -552,18 +555,18 @@ hitone:
 	sta level
 	//bne !+
 	// Win condition?
-	jmp finishFrame
+	jmp finishNonFrame
 ltwo:	
 	getfrogpos tmp0 
 	lda tmp0 + 1
 	beq !+
 	dec seconds
-	jmp finishFrame
+	jmp finishNonFrame
 !:	lda tmp0
 	cmp #110
 	bcc !+
 	dec seconds
-	jmp finishFrame
+	jmp finishNonFrame
 !:	ldy #15
 	sty secondsc
 	moveLilies()
@@ -573,24 +576,24 @@ ltwo:
 	jmp lthree
 !:	loadSprite(lilyunf1, 4)
 	mov #LILY_OFFSET : lily1offset
-	jmp finishFrame
+	jmp finishNonFrame
 lthree:	cmp #3
 	beq !+
 	jmp lfour
 !:	loadSprite(lilyunf21, 4)
 	loadSprite(lilyunf22, 5)
-	jmp finishFrame
+	jmp finishNonFrame
 lfour:	loadSprite(lilyunf31, 4)
 	loadSprite(lilyunf32, 5)
-	jmp finishFrame
+	jmp finishNonFrame
 chkscrol:	lda scrolling + 1
 	and #$7f
 	beq chklo
-	jmp finishFrame
+	jmp finishNonFrame
 chklo:	lda scrolling
 	beq complete
-	jmp finishFrame
+	jmp finishNonFrame
 complete:	initLily()
 	mov16 #frameISR : nextFrameISR
 	refreshPreframe()
-	jmp finishFrame
+	jmp finishNonFrame
