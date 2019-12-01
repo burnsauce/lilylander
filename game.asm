@@ -1,4 +1,5 @@
-.const lily1offset = 319-150
+.const LILY_OFFSET = 319-150
+.label lily1offset = reserve(1,0)
 
 #import "sin.asm"
 
@@ -132,6 +133,7 @@ powdone:	//powersound()
 	loadSprite(lilys12, 7)
 	moveSprite(7, startx + 24, starty + 21)
 	disableSprite(7)
+	mov #LILY_OFFSET : lily1offset
 	lda #0
 	sta SPRYEX
 	sta SPRXEX
@@ -164,6 +166,8 @@ leveldata:
 chklo:	lda $d000 + num * 2
 	beq chkhi
 !:	dec $d000 + num * 2
+	beq chkhi
+	dec $d000 + num * 2
 	jmp scrldone
 chkhi:	lda #(1 << num)
 	and $d010
@@ -185,7 +189,14 @@ scrldone:
 	scrollsprite(3)
 	scrollsprite(6)
 	scrollsprite(7)
-	dec scrollamt
+	lda #$7f
+	and scrolling + 1
+	bne movelily
+	lda scrolling
+	cmp #30
+	bmi movelily
+	dec lily1offset 
+	dec lily1offset 
 	// update lily1 (target lily)
 movelily:	lda level
 	asl
@@ -201,14 +212,12 @@ movelily:	lda level
 	adc #128
 	lsr
 	sta lilypos
-	lda level
-	lda scrollamt 
+	lda scrollamt
 	beq done
-	dec lilypos
-	dec scrollamt
+!:	dec scrollamt
 done:	lda lilypos	
 	clc
-	adc #lily1offset
+	adc lily1offset
 	bcc noover
 	// overflow already
 	sbc #24
@@ -227,7 +236,7 @@ foundhi:	sta $d008
 !:	sta $d010
 	lda lilypos
 	clc
-	adc #lily1offset
+	adc lily1offset
 	sta $d00A
 	//sta $d00E
 	bcc !+

@@ -238,6 +238,10 @@ jumpnow:
 	lda #0
 	sta keyheld
 	jmpsound()
+	mov16 #60 : scrolling
+	lda #$80
+	ora scrolling + 1
+	sta scrolling + 1
 	lda #1
 	sta jumping
 	sta phcount
@@ -364,6 +368,8 @@ hit:	landsound()
 	// set scrolling amount to d - 60
 	getfrogpos tmp0 
 	sub16 tmp0 : #60 : scrolling
+	lsr scrolling + 1
+	ror scrolling
 	lda #$80
 	ora scrolling + 1
 	sta scrolling + 1
@@ -490,7 +496,10 @@ chkcopy:	lda copy_request
 	and #%11111100
 	ora #2
 	sta $dd00
-	restoreV3()
+
+	mov #LILY_OFFSET : lily1offset
+
+	//restoreV3()
 	showTitle()
 	jmp finishFrame
 
@@ -563,6 +572,7 @@ ltwo:
 	beq !+
 	jmp lthree
 !:	loadSprite(lilyunf1, 4)
+	mov #LILY_OFFSET : lily1offset
 	jmp finishFrame
 lthree:	cmp #3
 	beq !+

@@ -88,6 +88,7 @@ init:
 	// blank screen
 	lda #%00100111
 	sta $d011
+	mov16 #0 : scrolling
 	// multicolor
 	// 38 col
 	// full H scroll
