@@ -17,10 +17,14 @@ sfx_jump:
 .byte $00
 
 sfx_splash:
-.byte $1a,$00,$00
-.for(var i=0; i<32; i++) {
-	.byte $ff - i 
-	.byte $81
+.byte $1a,$8a,$00
+.byte $df, $81 // initital hit 
+.for(var i=0; i<8; i++) { // bloop
+	.byte $92 + i * 4 
+	.byte $11
+}
+.for(var i=0; i<16; i++) { // splash 
+        .byte $df, $80 
 }
 .byte $00
 
