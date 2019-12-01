@@ -197,7 +197,7 @@ scrldone:
 	and scrolling + 1
 	bne movelily
 	lda scrolling
-	cmp #30
+	cmp #10
 	bmi movelily
 	dec lily1offset 
 	dec lily1offset 
