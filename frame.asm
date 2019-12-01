@@ -67,6 +67,16 @@
 	}
 }
 .segment Code "Frame Code"
+loadingISR:	startISR()
+	jsr $5403
+	// copy ghostregs
+	ldx #$18
+lcopy:	lda $e5,x
+	sta $d400,x
+	dex
+	bpl lcopy
+	asl $d019
+	finishISR()
 
 finishFrame:
 	dec exec_count
@@ -183,7 +193,17 @@ tholding:
 	jmp titledone
 startgame:	lda #0
 	sta keyheld
+	lda #$7f
+	and $d011
+	sta $d011
+	lda #preFrameRaster
+	sta $d012
+	setInterrupt(loadingISR)
+	asl $d019
+	cli
 	startGame()
+	dec exec_count
+	finishISR()
 titledone:	
 	lda bestscore
 	ora bestscore + 1
@@ -487,9 +507,15 @@ chkcopy:	lda copy_request
 	mov #15 : secondsc
 	rnd16 lily1ramp
 	// blank the display
-	lda #%11101111
+	// clear raster hi
+	lda #%01101111
 	and $d011
 	sta $d011
+	lda #preFrameRaster
+	sta $d012
+	setInterrupt(loadingISR)
+	asl $d019
+	cli
 	
 	lda #2
 	sta vicBank
@@ -500,8 +526,9 @@ chkcopy:	lda copy_request
 
 	mov #LILY_OFFSET : lily1offset
 
-	restoreV3()
 	showTitle()
+	restoreV3()
+	// special case
 	dec exec_count
 
 	finishISR()

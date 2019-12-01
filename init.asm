@@ -70,16 +70,16 @@ init:
 	writeScore()
 	setScoreColors(6)
 	// set the raster interrupt line
-	lda #frameRaster
-	sta $d012
 	mov16 #finishFrame : aniptr
 	mov16 #frameISR : nextFrameISR
-	lda #frameRaster
+	sei
+	lda #preFrameRaster
 	sta $d012
 	setInterrupt(titleISR)
 	lda #%00110111
 	sta $d011
-
+	asl $d019
+	cli
 }
 	
 .macro startGame() {
