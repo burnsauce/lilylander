@@ -38,42 +38,43 @@ Probably works on the hardware, too
 ```
    Memory Allocation
 
-$0002-$007a Zeropage Variables        121 bytes
-$007b-$00ba QSin Table                 64 bytes
-	   69 bytes free at $00bb
+$0002-$007c Zeropage Variables        123 bytes
+$007d-$00bc QSin Table                 64 bytes
+           67 bytes free at $00bd
 $0100-$01ff Stack                     256 bytes
 $0200-$0e30 CopyCode                 3121 bytes
-$0e31-$2a91 Frame Code               7265 bytes
-$2a92-$2aaa Main Loop                  25 bytes
-$2aab-$2aea Quarter-Sin() table        64 bytes
-$2aeb-$31ee RLE Matrix               1796 bytes
-$31ef-$35fe RLE Matrix               1040 bytes
-$35ff-$3bd8 RLE Color Ram            1498 bytes
-$3bd9-$3e99 RLE Color Ram             705 bytes
-	  358 bytes free at $3e9a
+$0e31-$2b09 Frame Code               7385 bytes
+$2b0a-$2b22 Main Loop                  25 bytes
+$2b23-$2b62 Quarter-Sin() table        64 bytes
+$2b63-$2c27 SFX Data                  197 bytes
+$2c28-$332b RLE Matrix               1796 bytes
+$332c-$373c RLE Matrix               1041 bytes
+$373d-$3d16 RLE Color Ram            1498 bytes
+$3d17-$3fd5 RLE Color Ram             703 bytes
+           42 bytes free at $3fd6
 $4000-$43f7 MatrixBuf                1016 bytes
 $43f8-$43ff SprPtrs1                    8 bytes
 $4400-$4fff Sprites1                 3072 bytes
 $5000-$53e7 ColorBuffer              1000 bytes
-$5000-$53e8 init                     1001 bytes
-$53e9-$5574 copyDblBitmap             396 bytes
-$5575-$5651 copyDblMatrix             221 bytes
-$5652-$56d0 unpackRamColumn           127 bytes
-$56d1-$56f9 copyDblRam                 41 bytes
-$56fa-$58de rleUnpackImage            485 bytes
-$58df-$5ac3 rleUnpackTitle            485 bytes
-$5ac4-$5b43 Level Data                128 bytes
-$5b44-$5be3 Font Data                 160 bytes
-	 1052 bytes free at $5be4
+$5000-$53ec init                     1005 bytes
+           19 bytes free at $53ed
+$5400-$5a6b song.prg                 1644 bytes
+$5a6c-$5bf7 DblBuf Code               396 bytes
+$5bf8-$5dd0 rleUnpackImage            473 bytes
+$5dd1-$5fa9 rleUnpackTitle            473 bytes
+           86 bytes free at $5faa
 $6000-$7f3f BitmapBuf                8000 bytes
 $7f40-$a872 RLE Bitmap              10547 bytes
-$a873-$bcc9 RLE Bitmap               5207 bytes
-	  822 bytes free at $bcca
+$a873-$bcc1 RLE Bitmap               5199 bytes
+$bcc2-$bd41 Level Data                128 bytes
+$bd42-$bde1 Font Data                 160 bytes
+$bde2-$bf56 DblBuf Code               373 bytes
+          169 bytes free at $bf57
 $c000-$c3f7 MatrixBuf2               1016 bytes
 $c3f8-$c3ff SprPtrs2                    8 bytes
 $c400-$cfff Sprites2                 3072 bytes
-	 4096 bytes free at $d000
+         4096 bytes free at $d000
 $e000-$ff3f BitmapBuf2               8000 bytes
-	  190 bytes free at $ff40
-	 6397 total bytes free
+          190 bytes free at $ff40
+         4479 total bytes free
 ```
